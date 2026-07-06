@@ -389,9 +389,14 @@
     }
 
     @media (max-width: 600px) {
+        .About-footer {
+            padding: 60px 20px 20px;
+        }
+
         .f-grid {
             grid-template-columns: 1fr;
             gap: 40px;
+            margin-bottom: 40px;
         }
 
         .f-brand-block {

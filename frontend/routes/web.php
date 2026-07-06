@@ -30,6 +30,9 @@ Route::get('/new', function () {
 });
 Route::get('/', [HomeController::class, 'index']);
 Route::get('/about', [AboutController::class, 'index']);
+Route::get('/safety-tips', function () {
+    return view('pages.safety-tips');
+})->name('safety-tips');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.submit');
 Route::get('/estimate', [EstimateController::class, 'index']);

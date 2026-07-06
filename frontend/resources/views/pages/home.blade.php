@@ -50,6 +50,12 @@
         .main-page-wrap {
             position: relative;
         }
+        
+        /* Ensure all main section containers have breathing room on tablets/small screens */
+        .about-inner, .how-inner, .why-inner, .process-inner, .safety-inner, .testimonials-inner, .faq-inner, .cta-banner-inner, .premium-catalogue-inner, .brands-inner, .categories-inner, .products-inner, .offer-strip-inner {
+            padding-left: 24px;
+            padding-right: 24px;
+        }
 
         /* ========================
        PREMIUM BORDER BEAM
@@ -176,7 +182,7 @@
             align-items: center;
             background: #080810;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 20px;
+            padding: 20px 0;
             box-sizing: border-box;
         }
 
@@ -254,12 +260,15 @@
 
         .banner-image,
         .banner-video {
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin: 0;
             z-index: 2;
             width: 100%;
             height: 100%;
-            object-fill: cover;
-            object-position: center;
+            object-fit: cover;
+            object-position: center center;
             transition: transform 1.3s ease;
         }
 
@@ -2534,12 +2543,12 @@
 
         .brands-marquee-wrap::before {
             left: 0;
-            background: linear-gradient(90deg, #080810, transparent) !important;
+            background: linear-gradient(90deg, #080810 2%, transparent) !important;
         }
 
         .brands-marquee-wrap::after {
             right: 0;
-            background: linear-gradient(-90deg, #080810, transparent) !important;
+            background: linear-gradient(-90deg, #080810 2%, transparent) !important;
         }
 
         .brands-track {
@@ -3607,6 +3616,95 @@
 
         }
     
+        /* Mobile 375x667 Specific Overrides */
+        @media screen and (max-width: 480px) {
+            /* Fix Offer Strip Overflow */
+            .offer-counters {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px !important;
+            }
+            .counter-box {
+                flex: 0 0 calc(50% - 10px);
+                min-width: unset;
+                padding: 10px;
+            }
+            .offer-strip-inner {
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 20px;
+                text-align: center;
+                padding: 20px 15px;
+            }
+
+            /* About Section Facts */
+            .about-facts {
+                grid-template-columns: 1fr;
+            }
+            .fact-item {
+                text-align: center;
+            }
+
+            /* General Section Padding Reduction */
+            .about-section, .how-section, .why-section, .process-section, .safety-section, .testimonials-section, .faq-section, .cta-banner, .premium-catalogue-section, .brands-section, .categories-section {
+                padding: 40px 15px !important;
+            }
+
+            /* Why Cell Padding */
+            .why-cell {
+                padding: 25px 20px !important;
+            }
+
+            /* Hero Slider & Brands Sizing */
+            .hero-combined-section {
+                height: auto !important;
+                min-height: auto !important;
+                padding-bottom: 30px;
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
+            .hero-banner-half, .hero-slider, .slide {
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
+            .hero-banner-half {
+                height: auto !important;
+            }
+            .hero-slider {
+                height: 220px !important;
+                min-height: unset !important;
+            }
+            
+            /* Force banner image to cover the slide completely without flexbox shrinking */
+            .banner-image, .banner-video {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                object-position: center center !important;
+                transform: scale(1.04) translateY(-1%) !important;
+            }
+
+            /* Announce Bar */
+            .announce-bar span {
+                margin: 0 10px;
+                font-size: 0.65rem;
+                letter-spacing: 1px;
+            }
+
+            /* Premium Catalogue */
+            .premium-catalogue-text h2 {
+                font-size: 1.8rem !important;
+            }
+            .catalogue-cta-btn {
+                padding: 12px 24px;
+                font-size: 0.85rem;
+            }
+        }
     </style>
 
     <!-- Clean layout - no animations -->

@@ -368,6 +368,21 @@ thead th {
 .product-row td:first-child { border-radius: 0; }
 .product-row td:last-child { border-radius: 0; }
 
+/* Desktop & Tablet Table Column Matrix */
+@media (min-width: 851px) {
+    table { table-layout: fixed; }
+    th:nth-child(1) { width: 110px; } /* Image */
+    th:nth-child(2) { width: auto; text-align: left; padding-left: 25px; } /* Product Name */
+    th:nth-child(3) { width: 12%; } /* Box Content */
+    th:nth-child(4) { width: 10%; } /* MRP */
+    th:nth-child(5) { width: 12%; } /* Discount */
+    th:nth-child(6) { width: 12%; } /* Offer Price */
+    th:nth-child(7) { width: 160px; } /* Quantity */
+    th:nth-child(8) { width: 10%; } /* Total */
+    
+    .product-row td:nth-child(2) { text-align: left; padding-left: 25px; }
+}
+
 .product-row:hover td { background: var(--off-white); }
 .product-row:hover { transform: scale(1.01); }
 
@@ -646,20 +661,151 @@ thead th {
 @media (max-width: 850px) {
     .top-summary { display: none !important; }
     .hero-title { font-size: 3rem; }
-    .table-wrap { padding: 15px; border-radius: 20px; border: none !important; background: transparent; box-shadow: none; }
+    .table-wrap { padding: 0 !important; border-radius: 0; border: none !important; background: transparent; box-shadow: none; box-sizing: border-box !important; overflow: hidden; width: 100%; }
     
-    /* Mobile Table: horizontal scroll instead of blocks to maintain exact grid */
-    .table-wrap {
-        overflow-x: auto;
-        padding: 15px;
-        -webkit-overflow-scrolling: touch;
+    /* Mobile Table: Convert to Modern Cards */
+    table, tbody, tr, td, th {
+        display: block;
+        width: 100%;
+        min-width: unset;
+        border: none !important;
+        box-sizing: border-box !important;
     }
-    table { width: 100%; min-width: 800px; }
+    table {
+        border-collapse: collapse;
+        border: none !important;
+    }
+    thead {
+        display: none !important;
+    }
     
     .category td { 
-        padding: 50px 15px 15px !important; 
-        font-size: 1.8rem; 
+        padding: 35px 12px 15px !important; 
+        font-size: 1.15rem !important; 
+        font-weight: 800 !important;
         background: transparent !important;
+        text-align: left;
+        color: #111 !important;
+        border: none !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .product-row {
+        display: grid !important;
+        grid-template-columns: 85px max-content 1fr max-content;
+        grid-template-rows: auto auto auto auto;
+        gap: 6px 10px;
+        background: #fff !important;
+        border: 1px solid rgba(0,0,0,0.08) !important;
+        border-radius: 12px;
+        padding: 14px !important;
+        margin-bottom: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        box-sizing: border-box !important;
+        width: 100% !important;
+        overflow: hidden;
+    }
+    
+    .product-row td {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        text-align: left !important;
+        color: #333 !important;
+        line-height: 1.3;
+    }
+    
+    /* 1. Image */
+    .product-row td:nth-child(1) {
+        grid-column: 1;
+        grid-row: 1 / span 4;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+    .product-row td:nth-child(1) img {
+        width: 85px;
+        height: 85px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin: 0;
+    }
+    
+    /* 2. Product Name */
+    .product-row td:nth-child(2) {
+        grid-column: 2 / span 3;
+        grid-row: 1;
+        font-size: 0.95rem !important;
+        font-weight: 700;
+        color: #111 !important;
+        margin-bottom: 2px;
+        padding-right: 5px !important;
+    }
+    
+    /* 3. Box Content */
+    .product-row td:nth-child(3) {
+        grid-column: 2 / span 3;
+        grid-row: 2;
+        font-size: 0.75rem !important;
+        color: #000 !important;
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+    
+    /* 4. MRP */
+    .product-row td:nth-child(4) {
+        grid-column: 2;
+        grid-row: 3;
+        font-size: 0.8rem !important;
+        color: #888 !important;
+        text-decoration: line-through;
+        align-self: center;
+        white-space: nowrap;
+    }
+    
+    /* 5. Discount */
+    .product-row td:nth-child(5) {
+        grid-column: 4;
+        grid-row: 3;
+        font-size: 0.7rem !important;
+        background: rgba(22, 163, 74, 0.1) !important;
+        color: #16A34A !important;
+        padding: 2px 6px !important;
+        border-radius: 4px;
+        align-self: center;
+        justify-self: end;
+        font-weight: 800;
+        white-space: nowrap;
+        margin-left: 5px;
+        width: max-content !important;
+    }
+    
+    /* 6. Offer Price */
+    .product-row td:nth-child(6) {
+        grid-column: 3;
+        grid-row: 3;
+        font-size: 1.15rem !important;
+        color: #0b6698 !important;
+        font-weight: 900;
+        align-self: center;
+        justify-self: start;
+        white-space: nowrap;
+        margin-left: 8px;
+    }
+    
+    /* 7. Quantity */
+    .product-row td:nth-child(7) {
+        grid-column: 2 / span 3;
+        grid-row: 4;
+        align-self: center;
+        margin-top: 6px;
+    }
+    
+    /* 8. Total */
+    .product-row td:nth-child(8) {
+        display: none !important;
     }
 
     .mobile-sticky-bar {
@@ -872,17 +1018,6 @@ thead th,
     .estimate-hero {
         min-height: 500px;
         height: 62vh;
-    }
-
-    .product-row {
-        /* background: rgba(15,15,28,0.92); */
-        border: 1px solid rgba(240,168,50,0.18);
-        border-radius: 18px;
-        padding: 14px 14px 14px 110px !important;
-    }
-
-    .product-row td {
-        background: transparent;
     }
 }
 .table-wrap{
