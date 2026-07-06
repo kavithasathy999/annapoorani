@@ -1308,11 +1308,63 @@
             display: block;
         }
      }
-       @media screen and (width: 540px) and (height: 720px){
-        .f-grid{
-            grid-template-columns:repeat(2, 1fr) !important;
-        }
-
+       @media screen and (width: 540px) and (height: 720px) {
+           .narrative-section, .values-section, .stats-bar, .about-cta {
+               padding: 40px 15px !important;
+           }
+           .narrative-title, .v-title, .cta-display {
+               font-size: 2.2rem !important;
+               text-align: center !important;
+           }
+           .happiness-tagline {
+               font-size: 1.4rem !important;
+               text-align: center !important;
+               margin-top: 10px !important;
+               margin-bottom: 20px !important;
+           }
+           .narrative-body {
+               text-align: center !important;
+               font-size: 1rem !important;
+               padding: 0 10px !important;
+           }
+           .narrative-eyebrow, .v-eyebrow {
+               display: flex !important;
+               text-align: center !important;
+               margin: 0 auto 15px auto !important;
+               width: max-content;
+           }
+           .narrative-bar, .v-title-sep {
+               margin: 15px auto !important;
+           }
+           .narrative-badges {
+               justify-content: center !important;
+           }
+           .visual-stack.main {
+               margin-bottom: 30px !important;
+           }
+           .visual-stack.main img {
+               height: 300px !important;
+               border-radius: 15px !important;
+           }
+           .values-grid {
+               grid-template-columns: 1fr !important;
+               gap: 20px !important;
+               margin-top: 20px !important;
+           }
+           .v-card {
+               padding: 30px 20px !important;
+           }
+           .stats-container {
+               flex-direction: column !important;
+               gap: 30px !important;
+               padding: 30px 0 !important;
+           }
+           .stat-item.divider {
+               display: none !important;
+           }
+           .col-lg-6 {
+               width: 100% !important;
+           }
        }
        @media screen and (min-height: 1279px) and (max-height: 1280px){
         .col-lg-6{

@@ -217,6 +217,16 @@
                 height: 60vh !important;
                 min-height: 400px !important;
             }
+            .banner-image, .banner-video {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                object-position: center center !important;
+            }
         }
 
         .slide {
@@ -260,15 +270,12 @@
 
         .banner-image,
         .banner-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            margin: 0;
+            position: relative;
             z-index: 2;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            object-position: center center;
+            object-fit: fill;
+            object-position: center;
             transition: transform 1.3s ease;
         }
 
@@ -3435,6 +3442,18 @@
         }
 
         @media screen and (width: 768px) and (height: 1024px) {
+            .hero-combined-section {
+                height: auto !important;
+                min-height: unset !important;
+            }
+            .hero-banner-half {
+                height: auto !important;
+            }
+            .hero-brands-half {
+                height: auto !important;
+                padding-top: 30px !important;
+                padding-bottom: 30px !important;
+            }
             .hero-slider {
                 height: 42vh !important;
             }
@@ -3514,10 +3533,38 @@
         }
 
         @media screen and (width: 912px) and (height: 1368px) {
-
+            .hero-combined-section {
+                height: auto !important;
+                min-height: unset !important;
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
+            .hero-banner-half, .hero-slider, .slide {
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
+            .hero-banner-half {
+                height: auto !important;
+            }
+            .hero-brands-half {
+                height: auto !important;
+                padding-top: 30px !important;
+                padding-bottom: 30px !important;
+            }
             .hero-slider {
                 height: 45vh !important;
                 min-height: 207px !important;
+            }
+            .banner-image,
+            .banner-video {
+                object-fit: cover !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                object-position: center center !important;
             }
 
             .about-inner {
@@ -3544,17 +3591,54 @@
         }
 
         @media screen and (width: 540px) and (height: 720px) {
+            .hero-combined-section {
+                height: auto !important;
+                min-height: unset !important;
+            }
+            .hero-banner-half {
+                height: auto !important;
+            }
+            .hero-brands-half {
+                height: auto !important;
+                padding-top: 30px !important;
+                padding-bottom: 30px !important;
+            }
             .hero-slider {
                 height: 40vh !important;
                 min-height: 207px !important;
             }
         }
 
-        @media screen and (max-width: 854px) and (min-width: 850px) {
-
+        @media screen and (max-width: 855px) and (min-width: 850px) {
+            .hero-combined-section {
+                height: auto !important;
+                min-height: unset !important;
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
             .hero-slider {
                 height: 45vh !important;
                 min-height: 207px !important;
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
+            .hero-slider .slide {
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
+            .hero-banner-half {
+                height: auto !important;
+            }
+            .banner-image,
+            .banner-video {
+                object-fit: cover !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                object-position: center center !important;
             }
 
             .about-inner {
@@ -3577,8 +3661,8 @@
             .why-stats {
                 margin: 20px !important;
             }
-
         }
+
         @media screen and (width: 1280px) and (height: 800px) {
             .hero-slider {
                 height: 95vh !important;
@@ -4562,6 +4646,46 @@ alt="Order Process">
             item.classList.toggle('open');
         });
     });
+
+    // Touch Swipe Logic for Hero Slider
+    const heroSlider = document.querySelector('.hero-slider');
+    if (heroSlider && slides.length > 1) {
+        let touchStartX = 0;
+        let touchEndX = 0;
+        heroSlider.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        heroSlider.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX < touchStartX - 40) goToSlide(current + 1); // Swiped left -> Next
+            if (touchEndX > touchStartX + 40) goToSlide(current - 1); // Swiped right -> Prev
+        }, { passive: true });
+    }
+
+    // Touch Swipe Logic for Brands Marquee (Direction Control)
+    const brandWrap = document.querySelector('.brands-marquee-wrap');
+    const brandTrack = document.getElementById('brandsTrack');
+    if (brandWrap && brandTrack) {
+        let bStartX = 0;
+        let bEndX = 0;
+        brandWrap.addEventListener('touchstart', e => {
+            bStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        brandWrap.addEventListener('touchend', e => {
+            bEndX = e.changedTouches[0].screenX;
+            // Only apply on mobile/tablet widths
+            if (window.innerWidth <= 1024) {
+                if (bEndX < bStartX - 30) {
+                    // Swiped Left -> scroll left
+                    brandTrack.style.animationDirection = 'normal';
+                }
+                if (bEndX > bStartX + 30) {
+                    // Swiped Right -> scroll right
+                    brandTrack.style.animationDirection = 'reverse';
+                }
+            }
+        }, { passive: true });
+    }
 })();
 </script>
 <!-- BRANDS MARQUEE ANIMATION HANDLED VIA CSS KEYFRAMES FOR 60FPS SMOOTHNESS -->
