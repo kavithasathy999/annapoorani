@@ -2004,6 +2004,7 @@ thead th,
     $priceList = \App\Models\PriceList::first();
     $global_settings = \App\Models\HomeSetting::first();
     $minOrder = $global_settings->min_order_value ?? 0;
+    $globalGst = $global_settings->global_gst ?? 0;
 @endphp
 
 <div class="estimate-page">
@@ -2135,7 +2136,7 @@ thead th,
                                     <td colspan="8"><i class="fa-solid fa-tags" style="color: #B8860B; margin-right: 8px;"></i> {{ strtoupper($category->category_name) }}</td>
                                 </tr>
                                 @foreach($category->products as $product)
-                                    <tr class="product-row" data-product-id="{{ $product->id }}" data-product-content="{{ $product->product_content }}" data-category="{{ strtolower($category->category_name) }}">
+                                    <tr class="product-row" data-product-id="{{ $product->id }}" data-product-content="{{ $product->product_content }}" data-category="{{ strtolower($category->category_name) }}" data-mrp="{{ $product->product_mrp_price }}" data-gst="{{ $product->product_gst !== null && $product->product_gst !== '' ? $product->product_gst : '' }}" data-gst-active="{{ $product->is_product_gst_active ?? 1 }}">
                                         <td>
                                             <img src="{{ $product->product_image ? env('MAIN_URL') . $product->product_image : 'https://via.placeholder.com/100' }}" alt="{{ $product->product_name }}" loading="lazy">
                                         </td>
@@ -2202,6 +2203,7 @@ thead th,
             @endif
             <div class="cart-summary-rows">
                 <div class="cart-summary-row"><span>Max Retail Price</span><span id="cartActual">₹0</span></div>
+                <div class="cart-summary-row" id="cartGstRow" style="display:none; color: #555; font-weight: 700; margin-top:10px;"><span>GST</span><span id="cartGstAmount">₹0</span></div>
                 <div class="cart-summary-row" style="color: #16A34A; font-weight: 700; margin-top:10px;"><span>Your Savings</span><span id="cartSave">- ₹0</span></div>
                 
                 <div class="cart-summary-row" id="additionalChargeRow" style="display:none; flex-direction:column; align-items:flex-start; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-top:10px;">
@@ -2370,6 +2372,7 @@ thead th,
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     const MIN_ORDER = {{ $minOrder }};
+    const GLOBAL_GST = {{ $globalGst }};
     let currentPackingPrice = 0;
     let currentShippingPrice = 0;
 
@@ -2661,13 +2664,21 @@ thead th,
     });
 
     function calculate() {
-        let netTotal = 0, actualTotal = 0, cartCount = 0;
+        let netTotal = 0, actualTotal = 0, cartCount = 0, totalGst = 0;
         let cartItemsHtml = '';
 
         document.querySelectorAll(".product-row").forEach(row => {
             const qty = parseInt(row.querySelector(".qty").value) || 0;
             const price = parseFloat(row.querySelector(".price").innerText) || 0;
             const actual = parseFloat(row.querySelector(".actual").innerText) || 0;
+            const mrp = parseFloat(row.dataset.mrp) || 0;
+            const productGstAttr = row.dataset.gst;
+            const isGstActive = row.dataset.gstActive === "1";
+            const gstPercent = (isGstActive && productGstAttr !== "") ? parseFloat(productGstAttr) : GLOBAL_GST;
+
+            const itemGst = (qty * mrp * gstPercent) / 100;
+            totalGst += itemGst;
+
             const rowTotal = qty * price;
             const actualRow = qty * actual;
 
@@ -2697,7 +2708,16 @@ thead th,
         // Update Cart Drawer summary
         document.getElementById("cartActual").innerText = '₹' + actualTotal.toLocaleString('en-IN');
         document.getElementById("cartSave").innerText = '- ₹' + (actualTotal - netTotal).toLocaleString('en-IN');
-        document.getElementById("cartNet").innerText = '₹' + netTotal.toLocaleString('en-IN'); // Drawer doesn't show charges
+        
+        const gstRow = document.getElementById("cartGstRow");
+        if (totalGst > 0) {
+            gstRow.style.display = "flex";
+            document.getElementById("cartGstAmount").innerText = '₹' + totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        } else {
+            gstRow.style.display = "none";
+        }
+        
+        document.getElementById("cartNet").innerText = '₹' + (netTotal + totalGst).toLocaleString('en-IN', { maximumFractionDigits: 2 }); // Drawer doesn't show charges
         
         // Update Modal Summary (if modal is open/or persistent)
         calculateCart();
@@ -2706,9 +2726,17 @@ thead th,
     }
 
     function calculateCart() {
-        let netTotal = 0, actualTotal = 0;
+        let netTotal = 0, actualTotal = 0, totalGst = 0;
         document.querySelectorAll(".product-row").forEach(row => {
             const qty = parseInt(row.querySelector(".qty").value) || 0;
+            const mrp = parseFloat(row.dataset.mrp) || 0;
+            const productGstAttr = row.dataset.gst;
+            const isGstActive = row.dataset.gstActive === "1";
+            const gstPercent = (isGstActive && productGstAttr !== "") ? parseFloat(productGstAttr) : GLOBAL_GST;
+
+            const itemGst = (qty * mrp * gstPercent) / 100;
+            totalGst += itemGst;
+
             netTotal += qty * (parseFloat(row.querySelector(".price").innerText) || 0);
             actualTotal += qty * (parseFloat(row.querySelector(".actual").innerText) || 0);
         });
@@ -2720,12 +2748,12 @@ thead th,
         if (packingChecked) additionalCharge += currentPackingPrice;
         if (shippingChecked) additionalCharge += currentShippingPrice;
 
-        const netWithCharge = netTotal + additionalCharge;
+        const netWithCharge = netTotal + additionalCharge + totalGst;
         
         // Update Cart Drawer Summary
         document.getElementById("cartActual").innerText = '₹' + actualTotal.toLocaleString('en-IN');
         document.getElementById("cartSave").innerText = '- ₹' + (actualTotal - netTotal).toLocaleString('en-IN');
-        document.getElementById("cartNet").innerText = '₹' + netWithCharge.toLocaleString('en-IN');
+        document.getElementById("cartNet").innerText = '₹' + netWithCharge.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
         // Update Mobile Summary
         const msbTotal = document.getElementById("msbTotal");
@@ -2889,9 +2917,10 @@ thead th,
             chargeAmount = currentShippingPrice;
         }
 
+        const totalGst = cartData.reduce((sum, item) => sum + item.item_gst, 0);
         const actualTotal = cartData.reduce((sum, item) => sum + item.mrp_total, 0);
         const subTotalValue = cartData.reduce((sum, item) => sum + item.total, 0);
-        const netValue = subTotalValue + chargeAmount;
+        const netValue = subTotalValue + chargeAmount + totalGst;
         
         errorDiv.style.display = "none";
         submitBtn.disabled = true;
@@ -2953,6 +2982,12 @@ thead th,
             if (qty > 0) {
                 const price = parseFloat(row.querySelector('.price').innerText) || 0;
                 const actual = parseFloat(row.querySelector('.actual').innerText) || 0;
+                const mrp = parseFloat(row.dataset.mrp) || 0;
+                const productGstAttr = row.dataset.gst;
+                const isGstActive = row.dataset.gstActive === "1";
+                const gstPercent = (isGstActive && productGstAttr !== "") ? parseFloat(productGstAttr) : GLOBAL_GST;
+                const itemGst = (qty * mrp * gstPercent) / 100;
+
                 cartData.push({
                     product_id: row.dataset.productId,
                     product_name: row.querySelector('.product-name').innerText.trim(),
@@ -2962,7 +2997,8 @@ thead th,
                     price: price,
                     actual: actual,
                     total: qty * price,
-                    mrp_total: qty * actual
+                    mrp_total: qty * actual,
+                    item_gst: itemGst
                 });
             }
         });

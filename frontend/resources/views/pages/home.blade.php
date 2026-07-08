@@ -3814,7 +3814,7 @@
             <div class="hero-slider">
                 @foreach($banners as $index => $banner)
                 @php
-                $bannerUrl = env('MAIN_URL', '/') . $banner->banner_image;
+                $bannerUrl = rtrim(env('MAIN_URL'), '/') . '/' . ltrim($banner->banner_image, '/');
                 $is_video = Str::endsWith($banner->banner_image, ['.mp4', '.webm', '.ogg']);
                 @endphp
                 <div class="slide {{ $index === 0 ? 'active' : '' }}">
@@ -3858,14 +3858,14 @@
                     <div class="brands-group">
                         @foreach($brands as $brand)
                         <div class="brand-card">
-                            <img src="{{ env('MAIN_URL', '/') . $brand->logo }}" alt="Brand Partner">
+                            <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($brand->logo, '/') }}" alt="Brand Partner">
                         </div>
                         @endforeach
                     </div>
                     <div class="brands-group">
                         @foreach($brands as $brand)
                         <div class="brand-card">
-                            <img src="{{ env('MAIN_URL', '/') . $brand->logo }}" alt="Brand Partner">
+                            <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($brand->logo, '/') }}" alt="Brand Partner">
                         </div>
                         @endforeach
                     </div>
@@ -3935,7 +3935,7 @@
             <div class="about-img-badge">
                 {{ $settings->welcome_badge_count ?? '25' }}<small>{{ $settings->welcome_badge_label ?? 'Years' }}</small>
             </div>
-            <img class="about-img-main" src="{{ env('MAIN_URL', '/') . $settings->welcome_image }}"
+            <img class="about-img-main" src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($settings->welcome_image, '/') }}"
                 alt="Crackers Store"> 
             <img class="about-img-accent" src="{{ asset('assets/images/night_rockets_bg.png') }}" alt="Crackers Store">
         </div>
@@ -4003,7 +4003,7 @@
     @if($index === 0)
     <div class="product-card featured-card">
         <div class="product-img-wrap">
-            <img src="{{ env('MAIN_URL', '/') . $product->product_image }}"
+            <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($product->product_image, '/') }}"
                 alt="{{ $product->product_name }}">
         </div>
         <div class="product-info">
@@ -4020,7 +4020,7 @@
     <div class="product-card">
         <span class="product-num">{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</span>
         <div class="product-img-wrap">
-            <img src="{{ env('MAIN_URL', '/') . $product->product_image }}"
+            <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($product->product_image, '/') }}"
                 alt="{{ $product->product_name }}">
         </div>
         <div class="product-info">
@@ -4340,7 +4340,7 @@
 
                 <div class="process-layout">
                     <div class="process-visual">
-                        <img class="process-main-img" src="{{ env('MAIN_URL', '/') . $settings->welcome_image }}"
+                        <img class="process-main-img" src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($settings->welcome_image, '/') }}"
 alt="Order Process">
 <div class="process-badge-float">
     <div class="big">80%</div>
@@ -4521,8 +4521,8 @@ alt="Order Process">
         <h2>{!! str_replace(['in Style?'], ['<span>in Style?</span>'], $settings->cta_data['title'] ?? 'Ready to Celebrate in Style?') !!}</h2>
         <p>{{ $settings->cta_data['desc'] ?? 'Download our price list, browse 200+ products, and order directly on WhatsApp. Pan India delivery — straight from Sivakasi to your doorstep.' }}</p>
         <div class="cta-btn-group">
-            <a href="{{ route('pricelist.download') }}" class="btn-primary">
-                <i class="fa-solid fa-download"></i> {{ $settings->cta_data['btn1_text'] ?? 'Download Price List' }}
+            <a href="{{ route('pricelist.download') }}" class="btn-primary" download onclick="handleSingleDownload(event, this)">
+                <i class="fa-solid fa-download"></i> <span class="btn-text">{{ $settings->cta_data['btn1_text'] ?? 'Download Price List' }}</span>
             </a>
             <a href="https://wa.me/+916380195167" class="btn-whatsapp" target="_blank">
                 <i class="fa-brands fa-whatsapp"></i> {{ $settings->cta_data['btn2_text'] ?? 'Chat on WhatsApp' }}

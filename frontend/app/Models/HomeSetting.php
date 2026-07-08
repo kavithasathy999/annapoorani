@@ -38,6 +38,7 @@ class HomeSetting extends Model
         'why_dials',
         'why_stats',
         'cta_data',
+        'global_gst',
     ];
 
     protected $casts = [

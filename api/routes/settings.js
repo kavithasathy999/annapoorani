@@ -832,6 +832,7 @@ router.get('/store', async (req, res) => {
         is_store_open: Number(pageOffRows[0]?.status ?? 1),
         min_order_value: Number(homeSettingsRows?.min_order_value ?? 0),
         global_discount: Number(discountRows[0]?.discount || 0),
+        global_gst: Number(homeSettingsRows?.global_gst ?? 0),
         off_banner_image: pageOffRows[0]?.image || '',
       },
     });
@@ -843,10 +844,11 @@ router.get('/store', async (req, res) => {
 // PUT /api/settings/store
 router.put('/store', auth, storeConfigUpload, async (req, res) => {
   try {
-    const { is_store_open, min_order_value, global_discount } = req.body;
+    const { is_store_open, min_order_value, global_discount, global_gst } = req.body;
     const normalizedStoreOpen = Number(is_store_open ?? 1);
     const normalizedMinOrderValue = Number(min_order_value ?? 0);
     const normalizedGlobalDiscount = Number(global_discount ?? 0);
+    const normalizedGlobalGst = Number(global_gst ?? 0);
 
     if (![0, 1].includes(normalizedStoreOpen)) {
       return res.status(400).json({ success: false, message: 'Store status must be 0 or 1.' });
@@ -858,6 +860,10 @@ router.put('/store', auth, storeConfigUpload, async (req, res) => {
 
     if (!Number.isFinite(normalizedGlobalDiscount) || normalizedGlobalDiscount < 0 || normalizedGlobalDiscount > 100) {
       return res.status(400).json({ success: false, message: 'Global discount must be between 0 and 100.' });
+    }
+
+    if (!Number.isFinite(normalizedGlobalGst) || normalizedGlobalGst < 0 || normalizedGlobalGst > 100) {
+      return res.status(400).json({ success: false, message: 'Global GST must be between 0 and 100.' });
     }
 
     const [discountRows] = await pool.query('SELECT id FROM discounts ORDER BY id ASC LIMIT 1');
@@ -875,7 +881,7 @@ router.put('/store', auth, storeConfigUpload, async (req, res) => {
       await pool.query('INSERT INTO page_off (status, image, created_at, updated_at) VALUES (?, ?, NOW(), NOW())', [normalizedStoreOpen, offBannerImage]);
     }
 
-    await updateSingleRow('home_settings', { min_order_value: normalizedMinOrderValue });
+    await updateSingleRow('home_settings', { min_order_value: normalizedMinOrderValue, global_gst: normalizedGlobalGst });
 
     res.json({ success: true, message: 'Store config updated' });
   } catch (error) {

@@ -21,6 +21,8 @@ class Product extends Model
         'product_stock',
         'show_mrp_in_pdf',
         'show_discount_in_pdf',
+        'is_product_gst_active',
+        'product_gst',
     ];
 
     public function category()

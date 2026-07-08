@@ -1,244 +1,269 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
-    <title>Estimate Terminal | Crakers</title>
+    <title>Estimate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #000;
+            margin: 0;
+            padding: 20px;
+        }
+        .header-table {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .header-table td {
+            vertical-align: top;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+        .company-details {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .logo-img {
+            max-width: 100px;
+        }
+        .blue-line {
+            border-top: 2px solid #1785B1;
+            margin: 10px 0;
+        }
+        .title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #1785B1;
+            margin: 10px 0 20px;
+        }
+        .bill-to-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .bill-to-name {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .items-table th {
+            background-color: #1785B1;
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            text-align: right;
+        }
+        .items-table th.left-align {
+            text-align: left;
+        }
+        .items-table td {
+            padding: 10px;
+            font-size: 14px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+        .items-table td.left-align {
+            text-align: left;
+        }
+        .total-row td {
+            font-weight: bold;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+        }
+        .footer-section {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .footer-left {
+            width: 60%;
+            vertical-align: top;
+            padding-right: 20px;
+        }
+        .footer-right {
+            width: 40%;
+            vertical-align: top;
+        }
+        .footer-heading {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .footer-text {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary-table td {
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+        .summary-table td:last-child {
+            text-align: right;
+        }
+        .summary-total {
+            background-color: #1785B1;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
 </head>
+<body>
 
-<body
-    style="margin: 0; padding: 0; background-color: #f9f7f2; font-family: 'Outfit', 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-    <div style="width: 100%; table-layout: fixed; background-color: #f9f7f2; padding: 40px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0"
-            style="max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 30px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.08); border: 1px solid #e5e0d5;">
+@php
+function numberToWords($number) {
+    $no = floor($number);
+    $point = round($number - $no, 2) * 100;
+    $hundred = null;
+    $digits_1 = strlen($no);
+    $i = 0;
+    $str = array();
+    $words = array('0' => '', '1' => 'One', '2' => 'Two',
+    '3' => 'Three', '4' => 'Four', '5' => 'Five', '6' => 'Six',
+    '7' => 'Seven', '8' => 'Eight', '9' => 'Nine',
+    '10' => 'Ten', '11' => 'Eleven', '12' => 'Twelve',
+    '13' => 'Thirteen', '14' => 'Fourteen',
+    '15' => 'Fifteen', '16' => 'Sixteen', '17' => 'Seventeen',
+    '18' => 'Eighteen', '19' =>'Nineteen', '20' => 'Twenty',
+    '30' => 'Thirty', '40' => 'Forty', '50' => 'Fifty',
+    '60' => 'Sixty', '70' => 'Seventy',
+    '80' => 'Eighty', '90' => 'Ninety');
+    $digits = array('', 'Hundred', 'Thousand', 'Lakh', 'Crore');
+    while ($i < $digits_1) {
+        $divider = ($i == 2) ? 10 : 100;
+        $number = floor($no % $divider);
+        $no = floor($no / $divider);
+        $i += ($divider == 10) ? 1 : 2;
+        if ($number) {
+            $plural = (($counter = count($str)) && $number > 9) ? '' : null;
+            $hundred = ($counter == 1 && $str[0]) ? ' and ' : null;
+            $str [] = ($number < 21) ? $words[$number] . " " . $digits[$counter] . $plural . " " . $hundred
+                : $words[floor($number / 10) * 10] . " " . $words[$number % 10] . " " . $digits[$counter] . $plural . " " . $hundred;
+        } else $str[] = null;
+    }
+    $str = array_reverse($str);
+    $result = implode('', $str);
+    return trim($result) . " Rupees only";
+}
+@endphp
 
-            <!-- Cinematic Header -->
+<table class="header-table">
+    <tr>
+        <td style="width: 70%;">
+            <div class="company-name">SRI ANNAPOORANI CRACKERS</div>
+            <div class="company-details">
+                1/205-13 Sattur to Virudhunagar Main Road R R<br>
+                Nagar,,virudhunagar district..<br>
+                Phone no.: 9360353597<br>
+                Email: sriannapooranicrackers@gmail.com
+            </div>
+        </td>
+        <td style="width: 30%; text-align: right;">
+            <img src="{{ public_path('assets/img/annapoorani-image.png') }}" alt="Logo" class="logo-img">
+        </td>
+    </tr>
+</table>
+
+<div class="blue-line"></div>
+
+<div class="title">Estimate</div>
+
+<div>
+    <div class="bill-to-title">Bill To</div>
+    <div class="bill-to-name">{{ $customerName ?? 'Walk-in Customer' }}</div>
+</div>
+
+<table class="items-table">
+    <thead>
+        <tr>
+            <th class="left-align" style="width: 5%;">S.NO</th>
+            <th class="left-align" style="width: 40%;">Product</th>
+            <th style="width: 10%;">Quantity</th>
+            <th style="width: 10%;">Unit</th>
+            <th style="width: 15%;">Price</th>
+            <th style="width: 20%;">Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        @php
+            $totalQty = 0;
+            $netTotalAmount = isset($netTotal) ? floatval($netTotal) : 0;
+        @endphp
+        @foreach($cartItems as $index => $item)
+            @php
+                $qty = isset($item['qty']) ? (int)$item['qty'] : 0;
+                $price = floatval($item['price'] ?? 0);
+                $total = floatval($item['total'] ?? 0);
+                $totalQty += $qty;
+            @endphp
             <tr>
-                <td style="background-color: #101010; padding: 50px 40px; text-align: center;">
-                    <div
-                        style="letter-spacing: 3px; color: #B8860B; font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">
-                        Order Confirmation</div>
-                    <h1
-                        style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 400; font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: 1px;">
-                        Price <span style="color: #B8860B;">Estimate</span></h1>
-                    <div
-                        style="margin-top: 15px; height: 1px; width: 60px; background-color: #B8860B; margin-left: auto; margin-right: auto;">
-                    </div>
-                </td>
+                <td class="left-align">{{ $index + 1 }}</td>
+                <td class="left-align"><b>{{ $item['product_name'] }}</b></td>
+                <td>{{ $qty }}</td>
+                <td>-</td>
+                <td>Rs {{ number_format($price, 2) }}</td>
+                <td>Rs {{ number_format($total, 2) }}</td>
             </tr>
+        @endforeach
+        <tr class="total-row">
+            <td colspan="2" class="left-align" style="text-align: center;">Total</td>
+            <td>{{ $totalQty }}</td>
+            <td></td>
+            <td></td>
+            <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+        </tr>
+    </tbody>
+</table>
 
-            <!-- Client & Reference Info -->
-            <tr>
-                <td style="padding: 40px 40px 20px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                        <tr>
-                            <td width="50%" style="vertical-align: top;">
-                                <div
-                                    style="font-size: 10px; font-weight: 800; color: #B8860B; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
-                                    Ref ID</div>
-                                <div style="font-size: 18px; font-weight: 700; color: #101010;">#{{ $orderId }}</div>
-                            </td>
-                            <td width="50%" style="vertical-align: top; text-align: right;">
-                                <div
-                                    style="font-size: 10px; font-weight: 800; color: #B8860B; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">
-                                    Recipient</div>
-                                <div style="font-size: 18px; font-weight: 700; color: #101010;">{{ $customerName }}
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-
-            <!-- Selection Inventory -->
-            <tr>
-                <td style="padding: 20px 40px;">
-                    <div
-                        style="font-size: 12px; font-weight: 800; color: #101010; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; border-bottom: 2px solid #101010; padding-bottom: 10px; display: inline-block;">
-                        Selection Inventory</div>
-
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 30px; border-collapse: collapse; border: 1px solid #ccc;">
-                        <thead>
-                            <tr>
-                                <th
-                                    style="text-align: left; padding: 15px 10px; font-size: 11px; color: #999; text-transform: uppercase; border: 1px solid #ccc;">
-                                    Product details</th>
-                                <th
-                                    style="text-align: center; padding: 15px 10px; font-size: 11px; color: #999; text-transform: uppercase; border: 1px solid #ccc;">
-                                    MRP</th>
-                                <th
-                                    style="text-align: center; padding: 15px 10px; font-size: 11px; color: #999; text-transform: uppercase; border: 1px solid #ccc;">
-                                    Discount</th>
-                                <th
-                                    style="text-align: center; padding: 15px 10px; font-size: 11px; color: #999; text-transform: uppercase; border: 1px solid #ccc;">
-                                    Offer Price</th>
-                                <th
-                                    style="text-align: center; padding: 15px 10px; font-size: 11px; color: #999; text-transform: uppercase; border: 1px solid #ccc;">
-                                    Qty</th>
-                                <th
-                                    style="text-align: center; padding: 15px 10px; font-size: 11px; color: #999; text-transform: uppercase; border: 1px solid #ccc;">
-                                    Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($cartItems as $item)
-                                @php
-                                    $showDiscount = \App\Models\GlobalSetting::first()->show_discount ?? true;
-                                    $mrp = floatval($item['actual'] ?? $item['price'] ?? 0);
-                                    $regular = floatval($item['price'] ?? 0);
-                                @endphp
-                                <tr>
-                                    <td style="padding: 15px 10px; border: 1px solid #ccc;">
-                                        <div style="font-size: 14px; font-weight: 700; color: #101010; margin-bottom: 3px;">
-                                            {{ $item['product_name'] }}</div>
-                                        <div style="font-size: 10px; color: #B8860B; font-weight: bold;">
-                                            <i class="fa-solid fa-tags" style="margin-right: 4px;"></i> {{ !empty($item['category']) ? strtoupper($item['category']) : 'FIREWORKS CATEGORY' }}
-                                        </div>
-                                    </td>
-                                    <td
-                                        style="padding: 15px 10px; text-align: center; font-size: 14px; color: #666; border: 1px solid #ccc;">
-                                        ₹{{ number_format($mrp, 2) }}
-                                    </td>
-                                    <td
-                                        style="padding: 15px 10px; text-align: center; font-size: 14px; border: 1px solid #ccc;">
-                                        @if($showDiscount && $mrp > $regular && $mrp > 0)
-                                            <span style="color: #16A34A; font-weight: 700; text-decoration: none !important;">({{ round((($mrp - $regular) / $mrp) * 100) }}% OFF)</span>
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td
-                                        style="padding: 15px 10px; text-align: center; font-size: 14px; color: #666; border: 1px solid #ccc;">
-                                        ₹{{ number_format($regular, 2) }}</td>
-                                    <td
-                                        style="padding: 15px 10px; text-align: center; font-size: 14px; color: #666; border: 1px solid #ccc;">
-                                        {{ $item['qty'] }}</td>
-                                    <td
-                                        style="padding: 15px 10px; text-align: center; font-size: 14px; font-weight: 800; color: #101010; border: 1px solid #ccc;">
-                                        ₹{{ number_format($item['total'] ?? 0, 2) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </td>
-            </tr>
-
-            <!-- Financial Settlement -->
-            <tr>
-                <td style="padding: 0 40px 40px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                        <tr>
-                            <td width="60%"></td>
-                            <td width="40%"
-                                style="background-color: #fbfaf8; border-radius: 20px; padding: 25px; border: 1px solid #efebe1;">
-                                <div style="display: table; width: 100%; margin-bottom: 12px;">
-                                    <div style="display: table-cell; font-size: 12px; color: #999; font-weight: 600;">
-                                        MRP Total</div>
-                                    <div
-                                        style="display: table-cell; text-align: right; font-size: 12px; color: #999; font-weight: 600;">
-                                        ₹{{ number_format($actualTotal, 2) }}</div>
-                                </div>
-                                @if(($actualTotal - $netTotal) > 0)
-                                    <div
-                                        style="display: table; width: 100%; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #efebe1;">
-                                        <div
-                                            style="display: table-cell; font-size: 12px; color: #28a745; font-weight: 700;">
-                                            Club Discount</div>
-                                        <div
-                                            style="display: table-cell; text-align: right; font-size: 12px; color: #28a745; font-weight: 700;">
-                                            - ₹{{ number_format($actualTotal - $netTotal, 2) }}</div>
-                                    </div>
-                                @endif
-                                <div style="display: table; width: 100%;">
-                                    <div
-                                        style="display: table-cell; font-size: 14px; color: #101010; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                                        Net Payable</div>
-                                    <div
-                                        style="display: table-cell; text-align: right; font-size: 22px; color: #101010; font-weight: 900; font-family: 'Outfit';">
-                                        ₹{{ number_format($netTotal, 2) }}</div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-
-            <!-- Payment Terminal -->
-            <tr>
-                <td style="padding: 40px; background-color: #fbf9f2; border-top: 1px solid #e5e0d5;">
-                    <div
-                        style="font-size: 12px; font-weight: 800; color: #B8860B; text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 30px;">
-                        Settlement Portals</div>
-
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                        <tr>
-                            <td width="48%"
-                                style="vertical-align: top; background-color: #ffffff; border-radius: 20px; padding: 25px; border: 1px solid #e5e0d5;">
-                                <div
-                                    style="font-size: 13px; font-weight: 800; color: #101010; margin-bottom: 15px; border-bottom: 1px solid #f4f1ea; padding-bottom: 10px;">
-                                    🏦 Bank Transfer</div>
-                                <div style="font-size: 12px; color: #666; line-height: 1.8;">
-                                    <strong style="color:#101010;">Bank:</strong> {{ $payment->bank_name ?? 'N/A' }}<br>
-                                    <strong style="color:#101010;">A/C No:</strong> <span
-                                        style="font-family:monospace; font-size:14px;">{{ $payment->account_number ?? 'N/A' }}</span><br>
-                                    <strong style="color:#101010;">IFSC:</strong> {{ $payment->ifsc_code ?? 'N/A' }}<br>
-                                    <strong style="color:#101010;">Holder:</strong>
-                                    {{ $payment->account_name ?? 'N/A' }}
-                                </div>
-                            </td>
-                            <td width="4%"></td>
-                            <td width="48%"
-                                style="vertical-align: top; background-color: #ffffff; border-radius: 20px; padding: 25px; border: 1px solid #e5e0d5;">
-                                <div
-                                    style="font-size: 13px; font-weight: 800; color: #101010; margin-bottom: 15px; border-bottom: 1px solid #f4f1ea; padding-bottom: 10px;">
-                                    📱 Digital Wallets</div>
-                                <div style="font-size: 12px; color: #666; line-height: 1.8;">
-                                    <strong style="color:#101010;">GPay / PhonePe:</strong><br>
-                                    <span
-                                        style="font-family:monospace; font-size:14px; color:#101010;">{{ $payment->gpay_number ?? $payment->phonepe_number ?? 'N/A' }}</span>
-
-                                    <div style="margin-top: 15px; text-align: center;">
-                                        @if(!empty($payment->gpay_qr_code))
-                                            <img src="{{ env('MAIN_URL') . $payment->gpay_qr_code }}" width="100"
-                                                height="100"
-                                                style="border: 1px solid #eee; border-radius: 10px; padding: 5px;"
-                                                alt="UPI QR">
-                                        @endif
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-
-                    @if(!empty($payment->additional_notes))
-                        <div
-                            style="margin-top: 30px; padding: 20px; border: 1px dashed #B8860B; border-radius: 15px; background-color: #fffefb; font-size: 12px; color: #666; line-height: 1.6; font-style: italic;">
-                            <strong
-                                style="color:#B8860B; font-style: normal; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Dispatcher
-                                Notes:</strong> {{ strip_tags($payment->additional_notes) }}
-                        </div>
-                    @endif
-                </td>
-            </tr>
-
-            <!-- Footer -->
-            <tr>
-                <td style="padding: 40px; text-align: center; color: #999;">
-                    <div
-                        style="font-size: 16px; color: #101010; font-weight: 400; font-family: 'Cormorant Garamond', Georgia, serif; margin-bottom: 10px;">
-                        Sri Shyam <span style="color: #B8860B;">Crackers</span></div>
-                    <div style="font-size: 11px; font-weight: 500; letter-spacing: 1px;">SIVAKASI • TAMIL NADU • QUALITY
-                        GUARANTEED</div>
-                    <div style="margin-top: 20px; font-size: 10px; opacity: 0.6;">This is an automated transaction
-                        breakdown. No signature required.</div>
-                </td>
-            </tr>
-        </table>
-    </div>
-</body>
-
-</html>
+<table class="footer-section">
+    <tr>
+        <td class="footer-left">
+            <div class="footer-heading">Estimate Amount In Words</div>
+            <div class="footer-text">{{ numberToWords($netTotalAmount) }}</div>
+            
+            <div class="footer-heading">Terms And Conditions</div>
+            <div class="footer-text">
+                Thank you Purchasing enjoy the festival in our<br>
+                crackers,<br>
+                Make your Happiness sure with our crackers!
+            </div>
+        </td>
+        <td class="footer-right">
+            <table class="summary-table">
+                <tr>
+                    <td>Sub Total</td>
+                    <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+                </tr>
+                <tr class="summary-total">
+                    <td>Total</td>
+                    <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Received</td>
+                    <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Previous Balance</td>
+                    <td>Rs 0.00</td>
+                </tr>
+                <tr style="border-bottom: 2px solid #000;">
+                    <td>Current Balance</td>
+                    <td>Rs 0.00</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 
 </body>
-
 </html>

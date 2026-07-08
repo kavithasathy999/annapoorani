@@ -7,7 +7,7 @@
              ======================== -->
 <!-- <section class="premium-hero"> -->
     <!-- <div class="hero-parallax-bg"
-        style="background-image: url('{{ $about->banner_image ? env('MAIN_URL', '/') . $about->banner_image : asset('assets/img/ab.jpg') }}');">
+        style="background-image: url('{{ $about->banner_image ? rtrim(env('MAIN_URL'), '/') . '/' . ltrim($about->banner_image, '/') : asset('assets/img/ab.jpg') }}');">
     </div>
     <div class="hero-glass-overlay"></div> -->
 
@@ -34,16 +34,16 @@
              ======================== -->
 <section class="narrative-section">
     <div class="container">
-        <div class="row align-items-center">
+        <div class="row align-items-lg-start align-items-center">
             <!-- Left: Visual Story -->
             <div class="col-lg-6">
                 <div class="narrative-visual">
                     <div class="visual-stack main">
-                        <img src="{{ env('MAIN_URL', '/') . $about->main_image }}" alt="Heritage">
+                        <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($about->main_image, '/') }}" alt="Heritage">
                         <div class="visual-accent-border"></div>
                     </div>
                     <div class="visual-stack sub">
-                        <img src="{{ env('MAIN_URL', '/') . $about->main_image }}" alt="Craft">
+                        <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($about->main_image, '/') }}" alt="Craft">
                     </div>
                     <div class="experience-pill">
                         <span class="n-years">{{ $settings->welcome_badge_count ?? '10+' }}</span>

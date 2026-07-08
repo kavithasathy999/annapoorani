@@ -21,6 +21,8 @@ const normalizeProduct = (row) => ({
   category_name: row.category_name,
   show_mrp_in_pdf: Number(row.show_mrp_in_pdf ?? 1),
   show_discount_in_pdf: Number(row.show_discount_in_pdf ?? 1),
+  is_product_gst_active: Number(row.is_product_gst_active ?? 1),
+  product_gst: row.product_gst !== null ? Number(row.product_gst) : null,
 });
 
 // GET /api/products
@@ -105,6 +107,7 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
     const description = req.body.description?.trim() || null;
     const showMrpInPdf = req.body.show_mrp_in_pdf !== undefined ? Number(req.body.show_mrp_in_pdf) : 1;
     const showDiscountInPdf = req.body.show_discount_in_pdf !== undefined ? Number(req.body.show_discount_in_pdf) : 1;
+    const productGst = req.body.product_gst !== undefined && req.body.product_gst !== '' ? Number(req.body.product_gst) : null;
 
     if (!categoryId) {
       return res.status(400).json({ success: false, message: 'Category is required.' });
@@ -116,9 +119,9 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO products
        (category_id, product_name, product_mrp_price, product_regular_price, product_image,
-        product_content, product_quantity, product_stock, product_desc, pro_details, show_mrp_in_pdf, show_discount_in_pdf, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [categoryId, name, mrpPrice, regularPrice, image, contentUnit, contentUnit, stockValue, description, description, showMrpInPdf, showDiscountInPdf]
+        product_content, product_quantity, product_stock, product_desc, pro_details, show_mrp_in_pdf, show_discount_in_pdf, product_gst, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [categoryId, name, mrpPrice, regularPrice, image, contentUnit, contentUnit, stockValue, description, description, showMrpInPdf, showDiscountInPdf, productGst]
     );
 
     res.status(201).json({ success: true, message: 'Product created', id: result.insertId });
@@ -140,6 +143,7 @@ router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
     const description = req.body.description?.trim() || null;
     const showMrpInPdf = req.body.show_mrp_in_pdf !== undefined ? Number(req.body.show_mrp_in_pdf) : 1;
     const showDiscountInPdf = req.body.show_discount_in_pdf !== undefined ? Number(req.body.show_discount_in_pdf) : 1;
+    const productGst = req.body.product_gst !== undefined && req.body.product_gst !== '' ? Number(req.body.product_gst) : null;
 
     if (!categoryId) {
       return res.status(400).json({ success: false, message: 'Category is required.' });
@@ -160,12 +164,13 @@ router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
       description,
       showMrpInPdf,
       showDiscountInPdf,
+      productGst,
     ];
     let query = `
       UPDATE products
       SET category_id = ?, product_name = ?, product_mrp_price = ?, product_regular_price = ?,
           product_content = ?, product_quantity = ?, product_stock = ?, product_desc = ?,
-          pro_details = ?, show_mrp_in_pdf = ?, show_discount_in_pdf = ?, updated_at = NOW()
+          pro_details = ?, show_mrp_in_pdf = ?, show_discount_in_pdf = ?, product_gst = ?, updated_at = NOW()
     `;
 
     if (image) {
@@ -190,7 +195,7 @@ router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
 // PATCH /api/products/:id/toggles
 router.patch('/:id/toggles', auth, async (req, res) => {
   try {
-    const { show_mrp_in_pdf, show_discount_in_pdf } = req.body;
+    const { show_mrp_in_pdf, show_discount_in_pdf, is_product_gst_active } = req.body;
     
     let query = 'UPDATE products SET updated_at = NOW()';
     const params = [];
@@ -203,6 +208,11 @@ router.patch('/:id/toggles', auth, async (req, res) => {
     if (show_discount_in_pdf !== undefined) {
       query += ', show_discount_in_pdf = ?';
       params.push(Number(show_discount_in_pdf));
+    }
+    
+    if (is_product_gst_active !== undefined) {
+      query += ', is_product_gst_active = ?';
+      params.push(Number(is_product_gst_active));
     }
     
     query += ' WHERE id = ?';

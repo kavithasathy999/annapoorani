@@ -47,6 +47,9 @@ const validateOrderItems = (items) => {
       quantity,
       price,
       total,
+      is_gst_applied: item.is_gst_applied ? 1 : 0,
+      item_gst: Number(item.item_gst || 0),
+      product_gst_rate: Number(item.product_gst_rate || 0),
     };
   });
 
@@ -99,12 +102,12 @@ const insertOrderItems = async (connection, orderId, items) => {
   for (const item of items) {
     await connection.query(
       `INSERT INTO product_slots
-       (order_id, product_id, product_name, product_total, qty, created_at, updated_at)
-       SELECT ?, ?, COALESCE(product_name, CONCAT('Product #', ?)), ?, ?, NOW(), NOW()
+       (order_id, product_id, product_name, product_total, qty, is_gst_applied, item_gst, product_gst_rate, created_at, updated_at)
+       SELECT ?, ?, COALESCE(product_name, CONCAT('Product #', ?)), ?, ?, ?, ?, ?, NOW(), NOW()
        FROM products
        WHERE id = ?
        LIMIT 1`,
-      [orderId, item.product_id, item.product_id, item.total, item.quantity, item.product_id]
+      [orderId, item.product_id, item.product_id, item.total, item.quantity, item.is_gst_applied, item.item_gst, item.product_gst_rate, item.product_id]
     );
   }
 };
@@ -387,6 +390,9 @@ router.get('/:id', async (req, res) => {
         ps.order_id,
         ps.product_id,
         ps.qty AS quantity,
+        ps.is_gst_applied,
+        ps.item_gst,
+        ps.product_gst_rate,
         CASE
           WHEN CAST(ps.qty AS DECIMAL(10,2)) > 0 THEN CAST(ps.product_total AS DECIMAL(10,2)) / CAST(ps.qty AS DECIMAL(10,2))
           ELSE 0
@@ -410,11 +416,13 @@ router.get('/:id', async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    const { customer_id, items, order_type, shipping = 0, discount = 0, notes, payment_status, status } = req.body;
+    const { customer_id, items, order_type, shipping = 0, discount = 0, notes, payment_status, status, apply_gst, total_gst } = req.body;
     const normalizedOrderType = normalizeOrderType(order_type);
     const normalizedCustomerId = Number(customer_id);
     const normalizedPaymentStatus = validatePaymentStatus(payment_status);
     const normalizedStatus = validateOrderStatus(status || 'Pending');
+    const is_gst_applied = apply_gst ? 1 : 0;
+    const normalizedTotalGst = is_gst_applied ? Number(total_gst || 0) : 0;
 
     if (!normalizedCustomerId) {
       return res.status(400).json({ success: false, message: 'Customer is required.' });
@@ -426,7 +434,7 @@ router.post('/', auth, async (req, res) => {
 
     const { parsedItems, subTotal } = validateOrderItems(items);
     const { normalizedShipping, normalizedDiscount } = validateAmounts(shipping, discount);
-    const total = subTotal + normalizedShipping - normalizedDiscount;
+    const total = subTotal + normalizedTotalGst + normalizedShipping - normalizedDiscount;
 
     if (total < 0) {
       throw createValidationError('Total amount cannot be negative.');
@@ -457,8 +465,8 @@ router.post('/', auth, async (req, res) => {
     const orderNo = `ORD-${Date.now().toString().slice(-8)}`;
     const [result] = await connection.query(
       `INSERT INTO orders
-        (order_no, customer_id, sub_total, shipping, discount, total, order_type, status, payment_status, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (order_no, customer_id, sub_total, shipping, discount, total, order_type, status, payment_status, notes, is_gst_applied, total_gst)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderNo,
         normalizedCustomerId,
@@ -470,6 +478,8 @@ router.post('/', auth, async (req, res) => {
         normalizedStatus,
         normalizedPaymentStatus,
         notes?.trim() || null,
+        is_gst_applied,
+        normalizedTotalGst,
       ]
     );
 
@@ -489,10 +499,12 @@ router.post('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    const { customer_id, items, shipping = 0, discount = 0, notes, status, payment_status } = req.body;
+    const { customer_id, items, shipping = 0, discount = 0, notes, status, payment_status, apply_gst, total_gst } = req.body;
     const normalizedCustomerId = Number(customer_id);
     const normalizedPaymentStatus = validatePaymentStatus(payment_status);
     const normalizedStatus = validateOrderStatus(status || 'Pending');
+    const is_gst_applied = apply_gst ? 1 : 0;
+    const normalizedTotalGst = is_gst_applied ? Number(total_gst || 0) : 0;
 
     if (!normalizedCustomerId) {
       return res.status(400).json({ success: false, message: 'Customer is required.' });
@@ -500,7 +512,7 @@ router.put('/:id', auth, async (req, res) => {
 
     const { parsedItems, subTotal } = validateOrderItems(items);
     const { normalizedShipping, normalizedDiscount } = validateAmounts(shipping, discount);
-    const total = subTotal + normalizedShipping - normalizedDiscount;
+    const total = subTotal + normalizedTotalGst + normalizedShipping - normalizedDiscount;
 
     if (total < 0) {
       throw createValidationError('Total amount cannot be negative.');
@@ -511,7 +523,7 @@ router.put('/:id', auth, async (req, res) => {
 
     await connection.query(
       `UPDATE orders
-       SET customer_id = ?, sub_total = ?, shipping = ?, discount = ?, total = ?, status = ?, payment_status = ?, notes = ?
+       SET customer_id = ?, sub_total = ?, shipping = ?, discount = ?, total = ?, status = ?, payment_status = ?, notes = ?, is_gst_applied = ?, total_gst = ?
        WHERE id = ?`,
       [
         normalizedCustomerId,
@@ -522,6 +534,8 @@ router.put('/:id', auth, async (req, res) => {
         normalizedStatus,
         normalizedPaymentStatus,
         notes?.trim() || null,
+        is_gst_applied,
+        normalizedTotalGst,
         req.params.id,
       ]
     );

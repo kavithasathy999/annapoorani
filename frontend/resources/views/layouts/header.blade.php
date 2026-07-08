@@ -1,5 +1,11 @@
 <!-- ===== HEADER ===== -->
-
+<style>
+    @media only screen and (min-width: 992px) {
+    .hdr-topbar .hdr-ticker-wrap .hdr-ticker p {
+        margin-top: 10px;
+    }
+}
+</style>
 <!-- Top Bar (ticker + contact) -->
 <div class="hdr-topbar">
     <div class="hdr-topbar-inner">
@@ -51,9 +57,9 @@
             </div>
 
             <!-- Download Price List CTA -->
-            <a href="{{ asset('assets/price-list.pdf') }}" class="hdr-cta hdr-cta-download" download>
+            <a href="{{ route('pricelist.download') }}" class="hdr-cta hdr-cta-download" download onclick="handleSingleDownload(event, this)">
                 <i class="fa-solid fa-download"></i>
-                <span>Download Price List</span>
+                <span class="btn-text">Download Price List</span>
             </a>
 
             <!-- Shop Now CTA -->
@@ -121,6 +127,7 @@
     letter-spacing: 0.8px;
     position: relative;
     z-index: 1002;
+    line-height: 1;
 }
 .hdr-topbar-inner {
     max-width: 1360px;
@@ -138,10 +145,14 @@
     overflow: hidden;
     mask-image: linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%);
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%);
+    display: flex;
+    align-items: center;
 }
 .hdr-ticker {
     overflow: hidden;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
 }
 .hdr-ticker-track {
     display: inline-flex;
@@ -619,6 +630,35 @@ document.addEventListener('DOMContentLoaded', () => {
 /* Google Translate init */
 function googleTranslateElementInit() {
     new google.translate.TranslateElement({ pageLanguage: 'en', includedLanguages: 'en,ta,kn', autoDisplay: false }, 'google_translate_element');
+}
+
+function handleSingleDownload(event, element) {
+    if (element.classList.contains('downloading')) {
+        event.preventDefault();
+        return;
+    }
+    
+    // Disable further clicks visually and functionally
+    element.classList.add('downloading');
+    element.style.pointerEvents = 'none';
+    element.style.opacity = '0.7';
+    
+    // Change button text and icon to show loading state
+    const textSpan = element.querySelector('.btn-text');
+    const originalText = textSpan ? textSpan.innerText : '';
+    const icon = element.querySelector('i');
+    
+    if (textSpan) textSpan.innerText = 'Downloading...';
+    if (icon) icon.className = 'fa-solid fa-spinner fa-spin';
+    
+    // Reset the button after 3 seconds
+    setTimeout(() => {
+        element.classList.remove('downloading');
+        element.style.pointerEvents = 'auto';
+        element.style.opacity = '1';
+        if (textSpan) textSpan.innerText = originalText;
+        if (icon) icon.className = 'fa-solid fa-download';
+    }, 3000);
 }
 </script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
