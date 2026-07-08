@@ -59,7 +59,7 @@
             color: white;
             padding: 10px;
             font-size: 14px;
-            text-align: right;
+            text-align: center;
         }
         .items-table th.left-align {
             text-align: left;
@@ -163,8 +163,8 @@ function numberToWords($number) {
             <div class="company-name">SRI ANNAPOORANI CRACKERS</div>
             <div class="company-details">
                 1/205-13 Sattur to Virudhunagar Main Road R R<br>
-                Nagar,,virudhunagar district..<br>
-                Phone no.: 9360353597<br>
+                Nagar,Virudhunagar district.<br>
+                Phone no: 9360353597<br>
                 Email: sriannapooranicrackers@gmail.com
             </div>
         </td>
@@ -186,8 +186,8 @@ function numberToWords($number) {
 <table class="items-table">
     <thead>
         <tr>
-            <th class="left-align" style="width: 5%;">S.NO</th>
-            <th class="left-align" style="width: 40%;">Product</th>
+            <th style="width: 5%;">S.NO</th>
+            <th style="width: 40%;">Product</th>
             <th style="width: 10%;">Quantity</th>
             <th style="width: 10%;">Unit</th>
             <th style="width: 15%;">Price</th>
