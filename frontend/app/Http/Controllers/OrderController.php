@@ -91,6 +91,14 @@ class OrderController extends Controller
             try {
                 $payment = \App\Models\PaymentSetting::first() ?? new \App\Models\PaymentSetting();
                 
+                $globalCharges = \Illuminate\Support\Facades\DB::table('settings')
+                    ->whereIn('setting_key', [
+                        'extra_charge_1_name', 'extra_charge_1_amount',
+                        'extra_charge_2_name', 'extra_charge_2_amount'
+                    ])
+                    ->pluck('setting_value', 'setting_key')
+                    ->toArray();
+
                 Mail::to($request->email)->send(new EstimateMail(
                     orderId:       $result,
                     cartItems:     $cartItems,
@@ -99,6 +107,7 @@ class OrderController extends Controller
                     customerName:  $request->name,
                     customerEmail: $request->email,
                     payment:       $payment,
+                    globalCharges: $globalCharges,
                 ));
             } catch (\Throwable $e) {
                 Log::warning('Order confirmation email failed: ' . $e->getMessage());

@@ -28,7 +28,8 @@ Route::get('/new', function () {
 
     return view('pages.new', compact('banners', 'products', 'settings', 'brands'));
 });
-Route::get('/', [HomeController::class, 'index']);
+Route::redirect('/', '/estimate');
+Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [AboutController::class, 'index']);
 Route::get('/safety-tips', function () {
     return view('pages.safety-tips');

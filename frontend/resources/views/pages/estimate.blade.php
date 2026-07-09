@@ -1939,63 +1939,20 @@ thead th,
     }
 }
 
-/* Category Pagination */
-.cat-pagination-row td {
-    background: transparent !important;
-    text-align: right !important;
-    padding: 20px 15px !important;
+/* Table Stretch Override to Full Screen Width */
+.estimate-content .table-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
     border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    margin: 40px 0 0 0 !important;
 }
-.cat-pagination-wrapper {
-    display: inline-flex;
-    align-items: center;
-    gap: 15px;
-}
-.cat-pagination-btn {
-    background: #d32f2f;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-weight: 800;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-.cat-pagination-btn:hover:not(:disabled) {
-    background: #b71c1c;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
-.cat-pagination-btn:disabled {
-    background: #e0e0e0;
-    color: #9e9e9e;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-.cat-pagination-label {
-    color: #333333;
-    font-size: 1rem;
-    font-weight: 800;
-    padding: 0 10px;
-}
-@media (max-width: 850px) {
-    .cat-pagination-row {
-        display: block !important;
-        border: none !important;
-        background: transparent !important;
-    }
-    .cat-pagination-row td {
-        display: block;
-        text-align: center !important;
-        padding: 15px !important;
-    }
-    .cat-pagination-wrapper {
-        justify-content: center;
-        width: 100%;
-    }
+.estimate-content table {
+    width: 100% !important;
+    border-collapse: collapse !important;
 }
 </style>
 @endpush
@@ -2114,9 +2071,10 @@ thead th,
                 <input type="text" id="searchInput" placeholder="Search for crackers (e.g. Sparklers, Chakkars)...">
                 <button type="button" id="clearSearchBtn" class="clear-search-btn" title="Clear Filter"><i class="fa-solid fa-xmark"></i></button>
             </div>
+        </div>
 
-            <div class="table-wrap wow fadeInUp" data-wow-delay="0.1s">
-                <table>
+        <div class="table-wrap wow fadeInUp" data-wow-delay="0.1s">
+            <table>
                     <thead class="notranslate">
                         <tr>
                             <th><i class="fa-solid fa-camera"></i></th>
@@ -2176,7 +2134,6 @@ thead th,
                     </tbody>
                 </table>
             </div>
-        </div>
     </section>
 
     <!-- 4. CART DRAWER -->
@@ -2206,19 +2163,20 @@ thead th,
                 <div class="cart-summary-row" id="cartGstRow" style="display:none; color: #555; font-weight: 700; margin-top:10px;"><span>GST</span><span id="cartGstAmount">₹0</span></div>
                 <div class="cart-summary-row" style="color: #16A34A; font-weight: 700; margin-top:10px;"><span>Your Savings</span><span id="cartSave">- ₹0</span></div>
                 
-                <div class="cart-summary-row" id="additionalChargeRow" style="display:none; flex-direction:column; align-items:flex-start; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-top:10px;">
-                    <span style="font-size:0.85rem; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Additional Charge</span>
-                    <div style="display:flex; flex-wrap:wrap; gap:15px; width:100%;">
-                        <label id="lblPackingWrap" style="display:none; align-items:center; gap:6px; font-size:0.95rem; cursor:pointer; color:#333;">
-                            <input type="checkbox" id="radioPacking" onchange="calculateCart()">
-                            Packing Price: <span id="lblPackingVal" style="font-weight:700; color:var(--gold-light);">₹0</span>
-                        </label>
-                        <label id="lblShippingWrap" style="display:none; align-items:center; gap:6px; font-size:0.95rem; cursor:pointer; color:#333;">
-                            <input type="checkbox" id="radioShipping" onchange="calculateCart()">
-                            Shipping Price: <span id="lblShippingVal" style="font-weight:700; color:var(--gold-light);">₹0</span>
-                        </label>
+                @if(!empty($globalCharges['extra_charge_1_name']) && floatval($globalCharges['extra_charge_1_amount'] ?? 0) > 0)
+                    <div class="cart-summary-row" style="color: #475569; font-weight: 600; margin-top:5px;">
+                        <span>{{ $globalCharges['extra_charge_1_name'] }}</span>
+                        <span id="extraCharge1Val">₹{{ number_format(floatval($globalCharges['extra_charge_1_amount']), 2) }}</span>
                     </div>
-                </div>
+                @endif
+                
+                @if(!empty($globalCharges['extra_charge_2_name']) && floatval($globalCharges['extra_charge_2_amount'] ?? 0) > 0)
+                    <div class="cart-summary-row" style="color: #475569; font-weight: 600; margin-top:5px;">
+                        <span>{{ $globalCharges['extra_charge_2_name'] }}</span>
+                        <span id="extraCharge2Val">₹{{ number_format(floatval($globalCharges['extra_charge_2_amount']), 2) }}</span>
+                    </div>
+                @endif
+
 
                 <div class="cart-summary-row total"><span>Net Amount</span><span id="cartNet">₹0</span></div>
             </div>
@@ -2373,8 +2331,8 @@ thead th,
 <script>
     const MIN_ORDER = {{ $minOrder }};
     const GLOBAL_GST = {{ $globalGst }};
-    let currentPackingPrice = 0;
-    let currentShippingPrice = 0;
+    let extraCharge1 = {{ floatval($globalCharges['extra_charge_1_amount'] ?? 0) }};
+    let extraCharge2 = {{ floatval($globalCharges['extra_charge_2_amount'] ?? 0) }};
 
     function handleStateChange() {
         const stateSelect = document.getElementById("checkoutState");
@@ -2395,162 +2353,10 @@ thead th,
     }
 
     function handleCityChange() {
-        const citySelect = document.getElementById("checkoutCity");
-        const selectedCity = citySelect.options[citySelect.selectedIndex];
-        const cityId = selectedCity ? selectedCity.dataset.id : null;
-        
-        const addChargeRow = document.getElementById("additionalChargeRow");
-        const lblPackingWrap = document.getElementById("lblPackingWrap");
-        const lblShippingWrap = document.getElementById("lblShippingWrap");
-        const lblPackingVal = document.getElementById("lblPackingVal");
-        const lblShippingVal = document.getElementById("lblShippingVal");
-        
-        addChargeRow.style.display = "none";
-        lblPackingWrap.style.display = "none";
-        lblShippingWrap.style.display = "none";
-        
-        currentPackingPrice = 0;
-        currentShippingPrice = 0;
-        document.getElementById("radioPacking").checked = false;
-        document.getElementById("radioShipping").checked = false;
-
-        if (cityId) {
-            fetch(`/ajax/charges/${cityId}`)
-                .then(res => res.json())
-                .then(data => {
-                    addChargeRow.style.display = "flex";
-                    lblPackingWrap.style.display = "flex";
-                    lblShippingWrap.style.display = "flex";
-                    
-                    if (data.success && data.packing_price > 0) {
-                        currentPackingPrice = parseFloat(data.packing_price);
-                        lblPackingVal.innerText = '₹' + currentPackingPrice.toLocaleString('en-IN');
-                    } else {
-                        currentPackingPrice = 0;
-                        lblPackingVal.innerText = '-';
-                    }
-
-                    if (data.success && data.shipping_price > 0) {
-                        currentShippingPrice = parseFloat(data.shipping_price);
-                        lblShippingVal.innerText = '₹' + currentShippingPrice.toLocaleString('en-IN');
-                    } else {
-                        currentShippingPrice = 0;
-                        lblShippingVal.innerText = '-';
-                    }
-                    
-                    calculateCart();
-                })
-                .catch(err => {
-                    console.error("Error fetching charges", err);
-                    calculateCart();
-                });
-        } else {
-            calculateCart();
-        }
-    }
-
-    const itemsPerPage = 5;
-    let categoryPages = {};
-
-    function initCategoryPagination() {
-        const categories = document.querySelectorAll('.category');
-        categories.forEach(catRow => {
-            const catName = catRow.getAttribute('data-category');
-            if (!catName) return;
-
-            const products = Array.from(document.querySelectorAll(`.product-row[data-category="${catName}"]`));
-            if (products.length > itemsPerPage) {
-                categoryPages[catName] = {
-                    currentPage: 1,
-                    allRows: products,
-                    totalPages: Math.ceil(products.length / itemsPerPage)
-                };
-
-                // Create Pagination Row
-                const lastProduct = products[products.length - 1];
-                const paginationRow = document.createElement('tr');
-                paginationRow.className = 'cat-pagination-row notranslate';
-                paginationRow.setAttribute('data-category', catName);
-                
-                const td = document.createElement('td');
-                td.colSpan = 8;
-                
-                const wrapper = document.createElement('div');
-                wrapper.className = 'cat-pagination-wrapper';
-
-                const prevBtn = document.createElement('button');
-                prevBtn.type = 'button';
-                prevBtn.className = 'cat-pagination-btn prev-btn';
-                prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Prev';
-                prevBtn.onclick = () => changeCategoryPage(catName, -1);
-
-                const label = document.createElement('span');
-                label.className = 'cat-pagination-label';
-                label.innerText = `Page 1 of ${categoryPages[catName].totalPages}`;
-
-                const nextBtn = document.createElement('button');
-                nextBtn.type = 'button';
-                nextBtn.className = 'cat-pagination-btn next-btn';
-                nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right"></i>';
-                nextBtn.onclick = () => changeCategoryPage(catName, 1);
-
-                wrapper.appendChild(prevBtn);
-                wrapper.appendChild(label);
-                wrapper.appendChild(nextBtn);
-                td.appendChild(wrapper);
-                paginationRow.appendChild(td);
-
-                lastProduct.parentNode.insertBefore(paginationRow, lastProduct.nextSibling);
-            }
-        });
-        updateAllCategoryViews();
-    }
-
-    function changeCategoryPage(catName, direction) {
-        const data = categoryPages[catName];
-        if (!data) return;
-        
-        data.currentPage += direction;
-        if (data.currentPage < 1) data.currentPage = 1;
-        if (data.currentPage > data.totalPages) data.currentPage = data.totalPages;
-        
-        updateCategoryView(catName);
-    }
-
-    function updateCategoryView(catName) {
-        const data = categoryPages[catName];
-        if (!data) return;
-        
-        const startIndex = (data.currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        
-        data.allRows.forEach((row, index) => {
-            if (index >= startIndex && index < endIndex) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        // Update controls
-        const paginationRow = document.querySelector(`.cat-pagination-row[data-category="${catName}"]`);
-        if (paginationRow) {
-            const prevBtn = paginationRow.querySelector('.prev-btn');
-            const nextBtn = paginationRow.querySelector('.next-btn');
-            const label = paginationRow.querySelector('.cat-pagination-label');
-            
-            if (prevBtn) prevBtn.disabled = data.currentPage === 1;
-            if (nextBtn) nextBtn.disabled = data.currentPage === data.totalPages;
-            if (label) label.innerText = `Page ${data.currentPage} of ${data.totalPages}`;
-        }
-    }
-
-    function updateAllCategoryViews() {
-        Object.keys(categoryPages).forEach(catName => updateCategoryView(catName));
+        calculateCart();
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-        initCategoryPagination();
 
         // Quantity Controls
         document.querySelectorAll(".qty").forEach(input => {
@@ -2584,35 +2390,26 @@ thead th,
         searchInput.addEventListener("keyup", function () {
             const value = this.value.toLowerCase();
             
-            // Toggle Clear Button and handle pagination visibility
+            // Toggle Clear Button
             if (value.length > 0) {
                 clearBtn.classList.add("active");
-                document.querySelectorAll('.cat-pagination-row').forEach(row => row.style.display = 'none');
             } else {
                 clearBtn.classList.remove("active");
-                document.querySelectorAll('.cat-pagination-row').forEach(row => row.style.display = '');
             }
 
             document.querySelectorAll(".product-row").forEach(row => {
                 const name = row.querySelector(".product-name").innerText.toLowerCase();
                 const category = row.getAttribute("data-category") || "";
                 
-                if (value.length > 0) {
-                    row.style.display = (name.includes(value) || category.includes(value)) ? "" : "none";
-                }
+                row.style.display = (value.length === 0 || name.includes(value) || category.includes(value)) ? "" : "none";
             });
-
-            // Restore pagination view if search is empty
-            if (value.length === 0) {
-                updateAllCategoryViews();
-            }
 
             // Hide categories if no products visible
             document.querySelectorAll(".category").forEach(catRow => {
                 let next = catRow.nextElementSibling;
                 let hasVisible = false;
                 while(next && !next.classList.contains('category')) {
-                    if(next.style.display !== 'none' && !next.classList.contains('cat-pagination-row')) { 
+                    if(next.style.display !== 'none') { 
                         hasVisible = true; 
                         break; 
                     }
@@ -2741,12 +2538,7 @@ thead th,
             actualTotal += qty * (parseFloat(row.querySelector(".actual").innerText) || 0);
         });
 
-        const packingChecked = document.getElementById("radioPacking")?.checked;
-        const shippingChecked = document.getElementById("radioShipping")?.checked;
-        
-        let additionalCharge = 0;
-        if (packingChecked) additionalCharge += currentPackingPrice;
-        if (shippingChecked) additionalCharge += currentShippingPrice;
+        let additionalCharge = extraCharge1 + extraCharge2;
 
         const netWithCharge = netTotal + additionalCharge + totalGst;
         
@@ -2868,9 +2660,7 @@ thead th,
                 "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
             body: JSON.stringify({ 
-                name, phone, email, address, state, city, pincode,
-                additional_charge_type: chargeType,
-                additional_charge_amount: chargeAmount
+                name, phone, email, address, state, city, pincode
             })
         })
         .then(response => response.json())
@@ -2904,23 +2694,13 @@ thead th,
         const submitBtn = document.getElementById("otpSubmitBtn");
 
         const cartData = getSelectedCartItems();
-        
-        const packingChecked = document.getElementById("radioPacking")?.checked;
-        const shippingChecked = document.getElementById("radioShipping")?.checked;
-        let chargeType = null;
-        let chargeAmount = 0;
-        if (packingChecked) {
-            chargeType = 'packing';
-            chargeAmount = currentPackingPrice;
-        } else if (shippingChecked) {
-            chargeType = 'shipping';
-            chargeAmount = currentShippingPrice;
-        }
+
+        let additionalCharge = extraCharge1 + extraCharge2;
 
         const totalGst = cartData.reduce((sum, item) => sum + item.item_gst, 0);
         const actualTotal = cartData.reduce((sum, item) => sum + item.mrp_total, 0);
         const subTotalValue = cartData.reduce((sum, item) => sum + item.total, 0);
-        const netValue = subTotalValue + chargeAmount + totalGst;
+        const netValue = subTotalValue + additionalCharge + totalGst;
         
         errorDiv.style.display = "none";
         submitBtn.disabled = true;
@@ -2937,9 +2717,7 @@ thead th,
                 otp: otp,
                 cart_data: JSON.stringify(cartData),
                 sub_total: actualTotal,
-                total: netValue,
-                additional_charge_type: chargeType,
-                additional_charge_amount: chargeAmount
+                total: netValue
             })
         })
         .then(response => response.json())

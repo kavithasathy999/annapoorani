@@ -230,8 +230,6 @@ function numberToWords($number) {
         <td class="footer-left">
             <div class="footer-heading">Estimate Amount In Words</div>
             <div class="footer-text">{{ numberToWords($netTotalAmount) }}</div>
-            
-            <div class="footer-heading">Terms And Conditions</div>
             <div class="footer-text">
                 Thank you Purchasing enjoy the festival in our<br>
                 crackers,<br>

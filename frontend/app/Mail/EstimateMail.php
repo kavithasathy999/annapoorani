@@ -19,6 +19,7 @@ class EstimateMail extends Mailable
         public string $customerName,
         public string $customerEmail,
         public \App\Models\PaymentSetting $payment,
+        public array $globalCharges = [],
     ) {
     }
 

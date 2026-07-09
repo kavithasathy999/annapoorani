@@ -10,11 +10,11 @@
             </a>
             <div class="f-brand-tag">Est. 2026 • Sivakasi's Premier Fireworks About</div>
             <div class="f-social-row">
-                <a href="{{ $global_settings->facebook_link }}" target="_blank" class="s-link fb" title="Facebook"><i
+                <a href="https://www.facebook.com/share/1C2V4XDP1M/" target="_blank" class="s-link fb" title="Facebook"><i
                         class="fa-brands fa-facebook-f"></i></a>
-                <a href="{{ $global_settings->instagram_link }}" target="_blank" class="s-link ig" title="Instagram"><i
+                <a href="https://www.instagram.com/sri_annapoorani_crackers?utm_source=qr&igsh=MXFhNHJqcm5tbHdiNw==" target="_blank" class="s-link ig" title="Instagram"><i
                         class="fa-brands fa-instagram"></i></a>
-                <a href="https://wa.me/{{ $global_settings->whatsapp_number }}" target="_blank" class="s-link wa"
+                <a href="https://wa.me/919360353597" target="_blank" class="s-link wa"
                     title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
                 <a href="{{ $global_settings->youtube_link }}" target="_blank" class="s-link yt" title="YouTube"><i
                         class="fa-brands fa-youtube"></i></a>

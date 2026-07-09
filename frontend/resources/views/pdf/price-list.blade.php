@@ -159,6 +159,7 @@
                     <tr>
                         <th style="width: 40px;">S.NO</th>
                         <th>Product</th>
+                        <th class="center-col" style="width: 60px;">Unit</th>
                         <th class="price-col" style="width: 90px;">Actual Price</th>
                         <th class="center-col" style="width: 80px;">Discount</th>
                         <th class="price-col" style="width: 90px;">Price</th>
@@ -169,6 +170,21 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td class="product-name">{{ $product->product_name }}</td>
+                            @php
+                                $name = strtolower($product->product_name);
+                                if (strpos($name, '1 pcs') !== false) {
+                                    $unit = '1 Piece';
+                                } elseif (strpos($name, 'pcs') !== false) {
+                                    $unit = '1 Pieces';
+                                } elseif (strpos($name, 'items') !== false) {
+                                    $unit = '1 Box';
+                                } elseif (strpos($name, 'kg') !== false || strpos($name, 'way') !== false) {
+                                    $unit = '1';
+                                } else {
+                                    $unit = '1';
+                                }
+                            @endphp
+                            <td class="center-col" style="color: #555; font-weight: 500;">{{ $unit }}</td>
                             <td class="price-col" style="color: #888; text-decoration: line-through;">
                                 @if($product->show_mrp_in_pdf && $product->product_mrp_price > 0)
                                     <span class="symbol">₹</span>{{ number_format($product->product_mrp_price, 2) }}
@@ -194,7 +210,7 @@
     @endforeach
 
     <div class="footer">
-        <div>{!! $global->footer_content ?? 'Premium Sivakasi Fireworks • Pan India Delivery' !!}</div>
+        <div>{!! str_replace(['Since 2000,', 'Since 2000'], '', $global->footer_content ?? 'Premium Sivakasi Fireworks • Pan India Delivery') !!}</div>
         <div>Thank you for choosing us for your festive celebrations!</div>
         <div style="margin-top: 5px;">&copy; {{ date('Y') }} {{ $global->company_name ?? 'Sri Annapoorani Crackers' }}. All Rights Reserved.</div>
     </div>

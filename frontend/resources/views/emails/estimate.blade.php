@@ -73,6 +73,10 @@
         .items-table td.left-align {
             text-align: left;
         }
+        .left-align { text-align: left !important; }
+        .center-align { text-align: center !important; }
+        .right-align { text-align: right !important; }
+        .nowrap { white-space: nowrap !important; }
         .total-row td {
             font-weight: bold;
             border-top: 2px solid #000;
@@ -186,12 +190,12 @@ function numberToWords($number) {
 <table class="items-table">
     <thead>
         <tr>
-            <th style="width: 5%;">S.NO</th>
-            <th style="width: 40%;">Product</th>
-            <th style="width: 10%;">Quantity</th>
-            <th style="width: 10%;">Unit</th>
-            <th style="width: 15%;">Price</th>
-            <th style="width: 20%;">Amount</th>
+            <th class="center-align" style="width: 5%;">S.NO</th>
+            <th class="left-align" style="width: 40%;">Product</th>
+            <th class="center-align" style="width: 10%;">Quantity</th>
+            <th class="center-align" style="width: 10%;">Unit</th>
+            <th class="right-align" style="width: 15%;">Price</th>
+            <th class="right-align" style="width: 20%;">Amount</th>
         </tr>
     </thead>
     <tbody>
@@ -207,20 +211,20 @@ function numberToWords($number) {
                 $totalQty += $qty;
             @endphp
             <tr>
-                <td class="left-align">{{ $index + 1 }}</td>
+                <td class="center-align">{{ $index + 1 }}</td>
                 <td class="left-align"><b>{{ $item['product_name'] }}</b></td>
-                <td>{{ $qty }}</td>
-                <td>-</td>
-                <td>Rs {{ number_format($price, 2) }}</td>
-                <td>Rs {{ number_format($total, 2) }}</td>
+                <td class="center-align">{{ $qty }}</td>
+                <td class="center-align">-</td>
+                <td class="right-align nowrap">Rs {{ number_format($price, 2) }}</td>
+                <td class="right-align nowrap">Rs {{ number_format($total, 2) }}</td>
             </tr>
         @endforeach
         <tr class="total-row">
-            <td colspan="2" class="left-align" style="text-align: center;">Total</td>
-            <td>{{ $totalQty }}</td>
+            <td colspan="2" class="right-align" style="padding-right: 20px;">Total</td>
+            <td class="center-align">{{ $totalQty }}</td>
             <td></td>
             <td></td>
-            <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+            <td class="right-align nowrap">Rs {{ number_format($netTotalAmount, 2) }}</td>
         </tr>
     </tbody>
 </table>
@@ -231,19 +235,35 @@ function numberToWords($number) {
             <div class="footer-heading">Estimate Amount In Words</div>
             <div class="footer-text">{{ numberToWords($netTotalAmount) }}</div>
             
-            <div class="footer-heading">Terms And Conditions</div>
             <div class="footer-text">
-                Thank you Purchasing enjoy the festival in our<br>
-                crackers,<br>
-                Make your Happiness sure with our crackers!
+                Thank you for purchasing! Enjoy the festival and make your happiness sure with our crackers!
             </div>
         </td>
         <td class="footer-right">
+            @php
+                $cartSubtotal = 0;
+                foreach($cartItems as $item) {
+                    $cartSubtotal += floatval($item['total'] ?? 0);
+                }
+            @endphp
             <table class="summary-table">
                 <tr>
                     <td>Sub Total</td>
-                    <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+                    <td>Rs {{ number_format($cartSubtotal, 2) }}</td>
                 </tr>
+                @if(isset($globalCharges) && !empty($globalCharges['extra_charge_1_name']) && floatval($globalCharges['extra_charge_1_amount'] ?? 0) > 0)
+                <tr>
+                    <td>{{ $globalCharges['extra_charge_1_name'] }}</td>
+                    <td>Rs {{ number_format(floatval($globalCharges['extra_charge_1_amount']), 2) }}</td>
+                </tr>
+                @endif
+                @if(isset($globalCharges) && !empty($globalCharges['extra_charge_2_name']) && floatval($globalCharges['extra_charge_2_amount'] ?? 0) > 0)
+                <tr>
+                    <td>{{ $globalCharges['extra_charge_2_name'] }}</td>
+                    <td>Rs {{ number_format(floatval($globalCharges['extra_charge_2_amount']), 2) }}</td>
+                </tr>
+                @endif
+
                 <tr class="summary-total">
                     <td>Total</td>
                     <td>Rs {{ number_format($netTotalAmount, 2) }}</td>

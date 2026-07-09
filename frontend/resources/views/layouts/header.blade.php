@@ -33,7 +33,7 @@
 
         <!-- Nav -->
         <nav class="hdr-nav" id="hdrNav">
-            <a href="{{ url('/') }}"        class="hdr-link {{ request()->is('/') ? 'hdr-link--active' : '' }}">Home</a>
+            <a href="{{ url('/home') }}"        class="hdr-link {{ request()->is('home') ? 'hdr-link--active' : '' }}">Home</a>
             <a href="{{ url('/about') }}"   class="hdr-link {{ request()->is('about') ? 'hdr-link--active' : '' }}">About</a>
             <a href="{{ url('/estimate') }}" class="hdr-link {{ request()->is('estimate') ? 'hdr-link--active' : '' }}">Products</a>
             <a href="{{ url('/safety-tips') }}"    class="hdr-link {{ request()->is('safety-tips*') ? 'hdr-link--active' : '' }}">Safety Tips</a>
@@ -86,7 +86,7 @@
             </button>
         </div>
         <nav class="hdr-mobile-nav">
-            <a href="{{ url('/') }}"        class="hdr-mobile-link {{ request()->is('/') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="{{ url('/home') }}"        class="hdr-mobile-link {{ request()->is('home') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-house"></i> Home</a>
             <a href="{{ url('/about') }}"   class="hdr-mobile-link {{ request()->is('about') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-feather-pointed"></i> About</a>
             <a href="{{ url('/estimate') }}" class="hdr-mobile-link {{ request()->is('estimate') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-fire-extinguisher"></i> Products</a>
             <a href="{{ url('/safety-tips') }}"    class="hdr-mobile-link {{ request()->is('safety-tips*') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-shield-halved"></i> Safety Tips</a>

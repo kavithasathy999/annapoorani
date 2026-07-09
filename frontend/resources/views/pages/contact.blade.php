@@ -40,7 +40,8 @@
                 <div class="col-lg-5">
                     <div class="contact-info-wrap">
                         <span class="c-eyebrow">Direct Contact</span>
-                        <h2 class="c-title">{{ $contact->heading ?? 'How can we help?<em></em>' }}</h2>
+                        <!-- <h2 class="c-title">{{ $contact->heading ?? 'How can we help?<em></em>' }}</h2> -->
+                         <h2 class="c-title">Any Inquiry?</h2>
                         <div class="c-bar"></div>
                         <p class="c-desc">
                             {{ strip_tags($contact->subheading ?? 'Our representatives at Sivakasi are ready to handle your celebration needs with precision and care.') }}
@@ -368,10 +369,24 @@
              ======================== -->
     <section class="premium-map-area">
         <div class="container">
-            <div class="map-frame-wrap wow zoomIn" data-wow-delay="0.2s">
-                <div class="map-inner-shadow"></div>
-                <div class="map-container-premium">
-                    <iframe src="https://maps.google.com/maps?q=Viruthunagar%20to%20Saathur%20Main%20Road,%20R.R.Nagar,%20Sivakasi&t=&z=13&ie=UTF8&iwloc=&output=embed" width="100%" height="500" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <div class="map-card wow fadeInUp" data-wow-delay="0.2s">
+                <div class="map-embed">
+                    <iframe src="https://maps.google.com/maps?q=Sri%20Annapoorani%20Crackers,%20Sivakasi&t=&z=15&ie=UTF8&iwloc=&output=embed" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+                
+                <div class="map-footer">
+                    <div class="map-footer-text">
+                        <h5>Visit Our Store</h5>
+                        <p>Sri Annapoorani Crackers, Sivakasi</p>
+                    </div>
+                    <div class="map-action-buttons">
+                        <a href="https://maps.app.goo.gl/V7wLBKZ8RJBgG4kM8?g_st=ac" target="_blank" class="map-btn map-btn-primary">
+                            <i class="fa-solid fa-map-location-dot"></i> Open in Maps
+                        </a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=Sri+Annapoorani+Crackers,+Sivakasi" target="_blank" class="map-btn map-btn-outline">
+                            <i class="fa-solid fa-route"></i> Get Directions
+                        </a>
+                    </div>
                 </div>
 
                 {{-- <div class="map-pin-badge">
@@ -939,42 +954,109 @@
             transform: translateX(5px) rotate(-10deg);
         }
 
-        /* Map Section (Refined) */
+        /* Map Section (Professional Redesign) */
         .premium-map-area {
-            padding: 0 0 60px;
-            background: linear-gradient(180deg, rgba(12, 12, 24, 0.98), rgba(8, 8, 16, 0.98));
-            position: relative;
+            padding: 80px 0;
+            background: #080810;
         }
 
-        .map-frame-wrap {
-            position: relative;
-            z-index: 2;
-            border-radius: 24px;
+        .map-card {
+            background: #121224;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: var(--shadow-premium);
-            border: 1px solid rgba(240, 168, 50, 0.22);
-            background: #11111d;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .map-inner-shadow {
-            position: absolute;
-            inset: 0;
-            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.1);
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        .map-container-premium iframe {
-            width: 100% !important;
-            height: 500px !important;
-            filter: grayscale(0.8) contrast(1.1) brightness(0.9);
-            transition: 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-            vertical-align: bottom;
+        .map-embed iframe {
+            width: 100%;
+            height: 450px;
             display: block;
+            border: none;
+            /* Professional maps usually don't have heavy grayscale filters, letting the natural UI shine */
+            filter: none; 
         }
 
-        .map-frame-wrap:hover .map-container-premium iframe {
-            filter: grayscale(0) contrast(1) brightness(1);
+        .map-footer {
+            padding: 25px 35px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            background: linear-gradient(180deg, #16162c, #0f0f1d);
+        }
+
+        .map-footer-text h5 {
+            color: #ffffff;
+            margin: 0 0 5px;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .map-footer-text p {
+            color: rgba(255, 255, 255, 0.6);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .map-action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .map-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .map-btn-primary {
+            background: var(--gold-deep);
+            color: #fff;
+            border: none;
+            box-shadow: 0 5px 15px rgba(212, 134, 10, 0.3);
+        }
+
+        .map-btn-primary:hover {
+            background: var(--gold-light);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 168, 50, 0.4);
+        }
+
+        .map-btn-outline {
+            background: transparent;
+            color: var(--gold-light);
+            border: 1.5px solid var(--gold-light);
+        }
+
+        .map-btn-outline:hover {
+            background: rgba(212, 134, 10, 0.1);
+            color: var(--gold-light);
+            border-color: var(--gold-light);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .map-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .map-action-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+            .map-btn {
+                justify-content: center;
+                width: 100%;
+            }
         }
 
         .map-pin-badge {
