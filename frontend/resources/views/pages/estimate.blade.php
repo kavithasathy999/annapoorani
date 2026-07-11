@@ -1962,6 +1962,8 @@ thead th,
     $global_settings = \App\Models\HomeSetting::first();
     $minOrder = $global_settings->min_order_value ?? 0;
     $globalGst = $global_settings->global_gst ?? 0;
+    $globalSettingModel = \App\Models\GlobalSetting::first();
+    $showDiscount = $globalSettingModel->show_discount ?? true;
 @endphp
 
 <div class="estimate-page">
@@ -2104,7 +2106,6 @@ thead th,
                                         </td> -->
                                         <td class="rowTotal notranslate">{{ $product->product_content }}</td>
                                         @php
-                                            $showDiscount = \App\Models\GlobalSetting::first()->show_discount ?? true;
                                             $mrp = floatval($product->product_mrp_price);
                                             $regular = floatval($product->product_regular_price);
                                         @endphp
@@ -2353,7 +2354,7 @@ thead th,
     }
 
     function handleCityChange() {
-        calculateCart();
+        calculate();
     }
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -2460,36 +2461,67 @@ thead th,
         });
     });
 
-    function calculate() {
-        let netTotal = 0, actualTotal = 0, cartCount = 0, totalGst = 0;
-        let cartItemsHtml = '';
+    // Cache products DOM elements and parsed data
+    let cachedProducts = [];
+    let isProductsCached = false;
 
+    function cacheProductsIfNeeded() {
+        if (isProductsCached) return;
+        cachedProducts = [];
         document.querySelectorAll(".product-row").forEach(row => {
-            const qty = parseInt(row.querySelector(".qty").value) || 0;
+            const qtyInput = row.querySelector(".qty");
             const price = parseFloat(row.querySelector(".price").innerText) || 0;
             const actual = parseFloat(row.querySelector(".actual").innerText) || 0;
             const mrp = parseFloat(row.dataset.mrp) || 0;
             const productGstAttr = row.dataset.gst;
             const isGstActive = row.dataset.gstActive === "1";
             const gstPercent = (isGstActive && productGstAttr !== "") ? parseFloat(productGstAttr) : GLOBAL_GST;
+            const rowTotalElement = row.querySelector(".rowTotal");
+            const name = row.querySelector(".product-name").innerText;
 
-            const itemGst = (qty * mrp * gstPercent) / 100;
-            totalGst += itemGst;
+            cachedProducts.push({
+                rowElement: row,
+                qtyInput: qtyInput,
+                price: price,
+                actual: actual,
+                mrp: mrp,
+                gstPercent: gstPercent,
+                rowTotalElement: rowTotalElement,
+                name: name
+            });
+        });
+        isProductsCached = true;
+    }
 
-            const rowTotal = qty * price;
-            const actualRow = qty * actual;
+    function calculate() {
+        cacheProductsIfNeeded();
 
-            row.querySelector(".rowTotal").innerText = rowTotal.toFixed(2);
+        let netTotal = 0, actualTotal = 0, cartCount = 0, totalGst = 0;
+        let cartItemsHtml = '';
+
+        cachedProducts.forEach(item => {
+            const qty = parseInt(item.qtyInput.value) || 0;
+            const rowTotal = qty * item.price;
+            const actualRow = qty * item.actual;
+
+            const formattedTotal = rowTotal.toFixed(2);
+            if (item.rowTotalElement.innerText !== formattedTotal) {
+                item.rowTotalElement.innerText = formattedTotal;
+            }
+
             netTotal += rowTotal;
             actualTotal += actualRow;
-            
+
+            const itemGst = (qty * item.mrp * item.gstPercent) / 100;
+            totalGst += itemGst;
+
             if (qty > 0) {
                 cartCount++;
                 cartItemsHtml += `
                     <div class="cart-item-row">
                         <div class="cart-item-info">
-                            <div class="cart-item-title">${row.querySelector(".product-name").innerText}</div>
-                            <div class="cart-item-meta-value">${qty} x ₹${price.toFixed(2)}</div>
+                            <div class="cart-item-title">${item.name}</div>
+                            <div class="cart-item-meta-value">${qty} x ₹${item.price.toFixed(2)}</div>
                         </div>
                         <div class="cart-item-total-price">₹${rowTotal.toFixed(2)}</div>
                     </div>
@@ -2502,7 +2534,9 @@ thead th,
         document.getElementById("youSave").innerText = (actualTotal - netTotal).toLocaleString('en-IN');
         document.getElementById("cartCount").innerText = cartCount;
 
-        // Update Cart Drawer summary
+        let additionalCharge = extraCharge1 + extraCharge2;
+        const netWithCharge = netTotal + additionalCharge + totalGst;
+
         document.getElementById("cartActual").innerText = '₹' + actualTotal.toLocaleString('en-IN');
         document.getElementById("cartSave").innerText = '- ₹' + (actualTotal - netTotal).toLocaleString('en-IN');
         
@@ -2514,47 +2548,17 @@ thead th,
             gstRow.style.display = "none";
         }
         
-        document.getElementById("cartNet").innerText = '₹' + (netTotal + totalGst).toLocaleString('en-IN', { maximumFractionDigits: 2 }); // Drawer doesn't show charges
-        
-        // Update Modal Summary (if modal is open/or persistent)
-        calculateCart();
-
-        document.getElementById("cartDrawerBody").innerHTML = cartCount > 0 ? cartItemsHtml : '<div class="text-center py-5 opacity-50">Your selection is empty</div>';
-    }
-
-    function calculateCart() {
-        let netTotal = 0, actualTotal = 0, totalGst = 0;
-        document.querySelectorAll(".product-row").forEach(row => {
-            const qty = parseInt(row.querySelector(".qty").value) || 0;
-            const mrp = parseFloat(row.dataset.mrp) || 0;
-            const productGstAttr = row.dataset.gst;
-            const isGstActive = row.dataset.gstActive === "1";
-            const gstPercent = (isGstActive && productGstAttr !== "") ? parseFloat(productGstAttr) : GLOBAL_GST;
-
-            const itemGst = (qty * mrp * gstPercent) / 100;
-            totalGst += itemGst;
-
-            netTotal += qty * (parseFloat(row.querySelector(".price").innerText) || 0);
-            actualTotal += qty * (parseFloat(row.querySelector(".actual").innerText) || 0);
-        });
-
-        let additionalCharge = extraCharge1 + extraCharge2;
-
-        const netWithCharge = netTotal + additionalCharge + totalGst;
-        
-        // Update Cart Drawer Summary
-        document.getElementById("cartActual").innerText = '₹' + actualTotal.toLocaleString('en-IN');
-        document.getElementById("cartSave").innerText = '- ₹' + (actualTotal - netTotal).toLocaleString('en-IN');
         document.getElementById("cartNet").innerText = '₹' + netWithCharge.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
         // Update Mobile Summary
         const msbTotal = document.getElementById("msbTotal");
         const msbCount = document.getElementById("msbCount");
-        const cartCount = document.querySelectorAll(".qty:not([value='0'])").length; 
         if (msbTotal) msbTotal.innerText = '₹' + netWithCharge.toLocaleString('en-IN');
         if (msbCount) msbCount.innerText = cartCount;
 
         updateMinOrderWidget(netWithCharge);
+
+        document.getElementById("cartDrawerBody").innerHTML = cartCount > 0 ? cartItemsHtml : '<div class="text-center py-5 opacity-50">Your selection is empty</div>';
     }
 
     function updateMinOrderWidget(netTotal) {
@@ -2754,29 +2758,22 @@ thead th,
     }
 
     function getSelectedCartItems() {
+        cacheProductsIfNeeded();
         const cartData = [];
-        document.querySelectorAll('.product-row').forEach(row => {
-            const qty = parseInt(row.querySelector('.qty').value) || 0;
+        cachedProducts.forEach(item => {
+            const qty = parseInt(item.qtyInput.value) || 0;
             if (qty > 0) {
-                const price = parseFloat(row.querySelector('.price').innerText) || 0;
-                const actual = parseFloat(row.querySelector('.actual').innerText) || 0;
-                const mrp = parseFloat(row.dataset.mrp) || 0;
-                const productGstAttr = row.dataset.gst;
-                const isGstActive = row.dataset.gstActive === "1";
-                const gstPercent = (isGstActive && productGstAttr !== "") ? parseFloat(productGstAttr) : GLOBAL_GST;
-                const itemGst = (qty * mrp * gstPercent) / 100;
-
                 cartData.push({
-                    product_id: row.dataset.productId,
-                    product_name: row.querySelector('.product-name').innerText.trim(),
-                    content: row.dataset.productContent || '',
-                    category: row.dataset.category || '',
+                    product_id: item.rowElement.dataset.productId,
+                    product_name: item.name.trim(),
+                    content: item.rowElement.dataset.productContent || '',
+                    category: item.rowElement.dataset.category || '',
                     qty: qty,
-                    price: price,
-                    actual: actual,
-                    total: qty * price,
-                    mrp_total: qty * actual,
-                    item_gst: itemGst
+                    price: item.price,
+                    actual: item.actual,
+                    total: qty * item.price,
+                    mrp_total: qty * item.actual,
+                    item_gst: (qty * item.mrp * item.gstPercent) / 100
                 });
             }
         });

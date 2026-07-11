@@ -166,8 +166,8 @@ function numberToWords($number) {
         <td style="width: 70%;">
             <div class="company-name">SRI ANNAPOORANI CRACKERS</div>
             <div class="company-details">
-                1/205-13 Sattur to Virudhunagar Main Road R R<br>
-                Nagar,Virudhunagar district.<br>
+                1/205-13, Sattur to Virudhunagar Main Road, R R<br>
+                Nagar, Virudhunagar district.<br>
                 Phone no: 9360353597<br>
                 Email: sriannapooranicrackers@gmail.com
             </div>

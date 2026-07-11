@@ -121,39 +121,41 @@
 <body>
 
 @php
-function numberToWords($number) {
-    $no = floor($number);
-    $point = round($number - $no, 2) * 100;
-    $hundred = null;
-    $digits_1 = strlen($no);
-    $i = 0;
-    $str = array();
-    $words = array('0' => '', '1' => 'One', '2' => 'Two',
-    '3' => 'Three', '4' => 'Four', '5' => 'Five', '6' => 'Six',
-    '7' => 'Seven', '8' => 'Eight', '9' => 'Nine',
-    '10' => 'Ten', '11' => 'Eleven', '12' => 'Twelve',
-    '13' => 'Thirteen', '14' => 'Fourteen',
-    '15' => 'Fifteen', '16' => 'Sixteen', '17' => 'Seventeen',
-    '18' => 'Eighteen', '19' =>'Nineteen', '20' => 'Twenty',
-    '30' => 'Thirty', '40' => 'Forty', '50' => 'Fifty',
-    '60' => 'Sixty', '70' => 'Seventy',
-    '80' => 'Eighty', '90' => 'Ninety');
-    $digits = array('', 'Hundred', 'Thousand', 'Lakh', 'Crore');
-    while ($i < $digits_1) {
-        $divider = ($i == 2) ? 10 : 100;
-        $number = floor($no % $divider);
-        $no = floor($no / $divider);
-        $i += ($divider == 10) ? 1 : 2;
-        if ($number) {
-            $plural = (($counter = count($str)) && $number > 9) ? '' : null;
-            $hundred = ($counter == 1 && $str[0]) ? ' and ' : null;
-            $str [] = ($number < 21) ? $words[$number] . " " . $digits[$counter] . $plural . " " . $hundred
-                : $words[floor($number / 10) * 10] . " " . $words[$number % 10] . " " . $digits[$counter] . $plural . " " . $hundred;
-        } else $str[] = null;
+if (!function_exists('numberToWords')) {
+    function numberToWords($number) {
+        $no = floor($number);
+        $point = round($number - $no, 2) * 100;
+        $hundred = null;
+        $digits_1 = strlen($no);
+        $i = 0;
+        $str = array();
+        $words = array('0' => '', '1' => 'One', '2' => 'Two',
+        '3' => 'Three', '4' => 'Four', '5' => 'Five', '6' => 'Six',
+        '7' => 'Seven', '8' => 'Eight', '9' => 'Nine',
+        '10' => 'Ten', '11' => 'Eleven', '12' => 'Twelve',
+        '13' => 'Thirteen', '14' => 'Fourteen',
+        '15' => 'Fifteen', '16' => 'Sixteen', '17' => 'Seventeen',
+        '18' => 'Eighteen', '19' =>'Nineteen', '20' => 'Twenty',
+        '30' => 'Thirty', '40' => 'Forty', '50' => 'Fifty',
+        '60' => 'Sixty', '70' => 'Seventy',
+        '80' => 'Eighty', '90' => 'Ninety');
+        $digits = array('', 'Hundred', 'Thousand', 'Lakh', 'Crore');
+        while ($i < $digits_1) {
+            $divider = ($i == 2) ? 10 : 100;
+            $number = floor($no % $divider);
+            $no = floor($no / $divider);
+            $i += ($divider == 10) ? 1 : 2;
+            if ($number) {
+                $plural = (($counter = count($str)) && $number > 9) ? '' : null;
+                $hundred = ($counter == 1 && $str[0]) ? ' and ' : null;
+                $str [] = ($number < 21) ? $words[$number] . " " . $digits[$counter] . $plural . " " . $hundred
+                    : $words[floor($number / 10) * 10] . " " . $words[$number % 10] . " " . $digits[$counter] . $plural . " " . $hundred;
+            } else $str[] = null;
+        }
+        $str = array_reverse($str);
+        $result = implode('', $str);
+        return trim($result) . " Rupees only";
     }
-    $str = array_reverse($str);
-    $result = implode('', $str);
-    return trim($result) . " Rupees only";
 }
 @endphp
 
@@ -162,9 +164,9 @@ function numberToWords($number) {
         <td style="width: 70%;">
             <div class="company-name">SRI ANNAPOORANI CRACKERS</div>
             <div class="company-details">
-                1/205-13 Sattur to Virudhunagar Main Road R R<br>
-                Nagar,,virudhunagar district..<br>
-                Phone no.: 9360353597<br>
+                1/205-13, Sattur to Virudhunagar Main Road, R R<br>
+                Nagar, Virudhunagar district.<br>
+                Phone no: 9360353597<br>
                 Email: sriannapooranicrackers@gmail.com
             </div>
         </td>
@@ -211,8 +213,8 @@ function numberToWords($number) {
                 <td class="left-align"><b>{{ $item->product_name ?? 'Product #' . $item->product_id }}</b></td>
                 <td>{{ $qty }}</td>
                 <td>-</td>
-                <td>Rs {{ number_format($price, 2) }}</td>
-                <td>Rs {{ number_format($total, 2) }}</td>
+                <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($price, 2) }}</td>
+                <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($total, 2) }}</td>
             </tr>
         @endforeach
         <tr class="total-row">
@@ -220,7 +222,7 @@ function numberToWords($number) {
             <td>{{ $totalQty }}</td>
             <td></td>
             <td></td>
-            <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+            <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($netTotalAmount, 2) }}</td>
         </tr>
     </tbody>
 </table>
@@ -240,23 +242,23 @@ function numberToWords($number) {
             <table class="summary-table">
                 <tr>
                     <td>Sub Total</td>
-                    <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+                    <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($netTotalAmount, 2) }}</td>
                 </tr>
                 <tr class="summary-total">
                     <td>Total</td>
-                    <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+                    <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($netTotalAmount, 2) }}</td>
                 </tr>
                 <tr>
                     <td>Received</td>
-                    <td>Rs {{ number_format($netTotalAmount, 2) }}</td>
+                    <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($netTotalAmount, 2) }}</td>
                 </tr>
                 <tr>
                     <td>Previous Balance</td>
-                    <td>Rs 0.00</td>
+                    <td style="white-space: nowrap;">Rs&nbsp;0.00</td>
                 </tr>
                 <tr style="border-bottom: 2px solid #000;">
                     <td>Current Balance</td>
-                    <td>Rs 0.00</td>
+                    <td style="white-space: nowrap;">Rs&nbsp;0.00</td>
                 </tr>
             </table>
         </td>

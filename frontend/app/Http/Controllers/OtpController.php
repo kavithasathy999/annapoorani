@@ -102,7 +102,7 @@ class OtpController extends Controller
 
             // Create or Update Customer
             $normalizedPhone = preg_replace('/^\+91/', '', $sessionData['phone']);
-            $customer = Customer::where('phone_number', 'LIKE', '%' . $normalizedPhone)->first();
+            $customer = Customer::where('phone_number', $normalizedPhone)->first();
             
             if ($customer) {
                 $customer->update([

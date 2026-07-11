@@ -371,7 +371,11 @@
         <div class="container">
             <div class="map-card wow fadeInUp" data-wow-delay="0.2s">
                 <div class="map-embed">
-                    <iframe src="https://maps.google.com/maps?q=Sri%20Annapoorani%20Crackers,%20Sivakasi&t=&z=15&ie=UTF8&iwloc=&output=embed" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    @if(!empty($contact->map_iframe))
+                        {!! $contact->map_iframe !!}
+                    @else
+                        <iframe src="https://maps.google.com/maps?q=Sri%20Annapoorani%20Crackers,%20Sivakasi&t=&z=15&ie=UTF8&iwloc=&output=embed" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    @endif
                 </div>
                 
                 <div class="map-footer">

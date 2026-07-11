@@ -190,19 +190,34 @@ class OrderController extends Controller
     public function invoicePdf($order_id)
     {
         $order = Order::where('order_no', $order_id)->orWhere('id', $order_id)->firstOrFail();
-        $customer = Customer::find($order->customer_id);
-        
-        $items = OrderSlot::where('order_id', $order->id)->get();
+        $cachePath = storage_path('app/public/invoices/Estimate-' . $order->order_no . '.pdf');
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', [
-            'order' => $order,
-            'customer' => $customer,
-            'items' => $items
-        ]);
-        
-        if (request()->has('download')) {
-            return $pdf->download('Invoice-' . $order->order_no . '.pdf');
+        if (!file_exists($cachePath)) {
+            $customer = Customer::find($order->customer_id);
+            $items = OrderSlot::where('order_id', $order->id)->get();
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', [
+                'order' => $order,
+                'customer' => $customer,
+                'items' => $items
+            ]);
+
+            $pdfContent = $pdf->output();
+            if (!file_exists(dirname($cachePath))) {
+                mkdir(dirname($cachePath), 0755, true);
+            }
+            file_put_contents($cachePath, $pdfContent);
         }
-        return $pdf->stream('Invoice-' . $order->order_no . '.pdf');
+
+        if (request()->has('download')) {
+            return response()->download($cachePath, 'Estimate-' . $order->order_no . '.pdf', [
+                'Content-Type' => 'application/pdf',
+            ]);
+        }
+
+        return response()->file($cachePath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="Estimate-' . $order->order_no . '.pdf"'
+        ]);
     }
 }

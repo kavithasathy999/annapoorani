@@ -1693,8 +1693,8 @@ body {
         <h2>Ready to Celebrate <span>in Style?</span></h2>
         <p>Download our price list, browse 200+ products, and order directly on WhatsApp. Pan India delivery — straight from Sivakasi to your doorstep.</p>
         <div class="cta-btn-group">
-            <a href="{{ url('estimate') }}" class="btn-primary">
-                <i class="fa-solid fa-download"></i> Download Price List
+            <a href="{{ route('pricelist.download') }}" class="btn-primary" download onclick="handleSingleDownload(event, this)">
+                <i class="fa-solid fa-download"></i> <span class="btn-text">Download Price List</span>
             </a>
             <a href="https://wa.me/{{ $settings->whatsapp_number ?? '' }}" class="btn-whatsapp">
                 <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
