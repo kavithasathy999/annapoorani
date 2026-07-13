@@ -8,7 +8,7 @@
              ======================== -->
     <section class="premium-hero">
         <div class="hero-parallax-bg"
-            style="background-image: url('{{ $contact->banner_image ? env('MAIN_URL', '/') . $contact->banner_image : asset('assets/img/contact-premium.png') }}');">
+            style="background-image: url('{{ $contact->banner_image ? config('services.asset_base_url') . '/' . ltrim($contact->banner_image, '/') : asset('assets/img/contact-premium.png') }}');">
         </div>
         <div class="hero-glass-overlay"></div>
         <div class="hero-content-wrap">

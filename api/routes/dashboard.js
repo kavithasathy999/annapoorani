@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
     const totalOrders = await getCount('orders');
     const totalCustomers = await getCount('customers');
     const totalBrands = await getCount('brands');
-    const totalEnquiries = await getCount('enquiries');
+    const totalEnquiries = await getCount('contact_enquiries');
     
     let storeStatus = 1;
     if (await tableExists('store_config')) {

@@ -48,7 +48,7 @@
                         <!-- <div class="qr-full-label">
                             <i class="fab fa-google-pay"></i> Google Pay
                         </div> -->
-                        <img src="{{ env('MAIN_URL') . $payment->gpay_qr_code }}" alt="GPay QR" class="qr-full-img qr-zoom">
+                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($payment->gpay_qr_code, '/') }}" alt="GPay QR" class="qr-full-img qr-zoom">
                         <div class="qr-full-sub">Tap QR to enlarge</div>
                     </div>
                 </div>
@@ -79,7 +79,7 @@
                         <!-- <div class="qr-full-label">
                             <i class="fas fa-mobile-alt"></i> PhonePe
                         </div> -->
-                        <img src="{{ env('MAIN_URL') . $payment->phonepe_qr_code }}" alt="PhonePe QR" class="qr-full-img qr-zoom">
+                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($payment->phonepe_qr_code, '/') }}" alt="PhonePe QR" class="qr-full-img qr-zoom">
                         <div class="qr-full-sub">Tap QR to enlarge</div>
                     </div>
                 </div>

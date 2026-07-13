@@ -863,6 +863,14 @@ thead th {
 
 .mobile-sticky-bar { display: none; }
 
+/* Do not let estimate-page floating summaries cover the footer credits. */
+body.estimate-footer-visible .top-summary.is-sticky,
+body.estimate-footer-visible .mobile-sticky-bar {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 /* Mobile Sticky Summary */
 @media (max-width: 991px) {
     .top-summary { display: none !important; }
@@ -1954,17 +1962,26 @@ thead th,
     width: 100% !important;
     border-collapse: collapse !important;
 }
+
+/* Keep collapsed outer table borders inside the desktop viewport. */
+@media (min-width: 992px) {
+    .estimate-content .table-wrap {
+        box-sizing: border-box !important;
+        padding-left: max(1px, calc(100vw - 100%)) !important;
+        padding-right: 0 !important;
+    }
+
+    .estimate-content .table-wrap > table {
+        border: 1px solid #000000 !important;
+    }
+
+    .estimate-content .category td {
+        box-sizing: border-box !important;
+        padding-left: 24px !important;
+    }
+}
 </style>
 @endpush
-
-@php
-    $priceList = \App\Models\PriceList::first();
-    $global_settings = \App\Models\HomeSetting::first();
-    $minOrder = $global_settings->min_order_value ?? 0;
-    $globalGst = $global_settings->global_gst ?? 0;
-    $globalSettingModel = \App\Models\GlobalSetting::first();
-    $showDiscount = $globalSettingModel->show_discount ?? true;
-@endphp
 
 <div class="estimate-page">
 
@@ -2098,7 +2115,7 @@ thead th,
                                 @foreach($category->products as $product)
                                     <tr class="product-row" data-product-id="{{ $product->id }}" data-product-content="{{ $product->product_content }}" data-category="{{ strtolower($category->category_name) }}" data-mrp="{{ $product->product_mrp_price }}" data-gst="{{ $product->product_gst !== null && $product->product_gst !== '' ? $product->product_gst : '' }}" data-gst-active="{{ $product->is_product_gst_active ?? 1 }}">
                                         <td>
-                                            <img src="{{ $product->product_image ? env('MAIN_URL') . $product->product_image : 'https://via.placeholder.com/100' }}" alt="{{ $product->product_name }}" loading="lazy">
+                                            <img src="{{ $product->product_image ? config('services.asset_base_url') . '/' . ltrim($product->product_image, '/') : 'https://via.placeholder.com/100' }}" alt="{{ $product->product_name }}" loading="lazy">
                                         </td>
                                         <td class="product-name">{{ $product->product_name }}</td>
                                         <!-- <td>
@@ -2447,18 +2464,27 @@ thead th,
         }
 
         // Parallax & Dynamic Summary Logic
-        window.addEventListener('scroll', () => {
+        const updateFloatingSummary = () => {
             const bg = document.querySelector('.hero-parallax-bg');
             if (bg) bg.style.transform = `scale(1.1) translateY(${window.scrollY * 0.3}px)`;
-            
+
             // Toggle Sticky Summary
             const summary = document.getElementById('dynamicSummary');
-            if (window.scrollY > 450) {
+            if (summary && window.scrollY > 450) {
                 summary.classList.add('is-sticky');
-            } else {
+            } else if (summary) {
                 summary.classList.remove('is-sticky');
             }
-        });
+
+            // Hide floating summaries as soon as the footer enters the viewport.
+            const footer = document.querySelector('.About-footer');
+            const footerVisible = footer && footer.getBoundingClientRect().top < window.innerHeight;
+            document.body.classList.toggle('estimate-footer-visible', Boolean(footerVisible));
+        };
+
+        window.addEventListener('scroll', updateFloatingSummary, { passive: true });
+        window.addEventListener('resize', updateFloatingSummary);
+        updateFloatingSummary();
     });
 
     // Cache products DOM elements and parsed data
@@ -2587,6 +2613,24 @@ thead th,
     }
 
     function openCart() {
+        const hasSelectedProducts = Array.from(document.querySelectorAll(".qty"))
+            .some(input => (parseInt(input.value, 10) || 0) > 0);
+
+        if (!hasSelectedProducts) {
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Your cart is empty',
+                    text: 'Please add at least one product before viewing the order summary.',
+                    confirmButtonText: 'Continue Shopping'
+                });
+            } else {
+                window.alert('Please add at least one product before viewing the order summary.');
+            }
+            return;
+        }
+
+        calculate();
         document.getElementById("cartDrawer").classList.add("active");
         document.getElementById("cartOverlay").style.display = "block";
     }

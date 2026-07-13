@@ -14,7 +14,7 @@
                     <!-- Header Logo -->
                     <tr>
                         <td align="center" style="padding: 40px 40px 20px 40px;">
-                            <a href="{{ env('MAIN_URL', url('/')) }}" style="text-decoration: none; border: none; display: inline-block;">
+                            <a href="{{ config('services.asset_base_url', url('/')) }}" style="text-decoration: none; border: none; display: inline-block;">
                                 <img src="{{ $message->embed(base_path('../api/annapooranilogo.png')) }}" alt="Logo" style="max-width: 280px; display: block; border: none; outline: none;" />
                             </a>
                         </td>

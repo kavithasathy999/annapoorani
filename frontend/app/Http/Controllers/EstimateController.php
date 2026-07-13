@@ -7,34 +7,32 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Product;
 use App\Models\State;
+use App\Models\PriceList;
+use App\Models\HomeSetting;
+use App\Models\GlobalSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class EstimateController extends Controller
 {
     public function index()
     {
-        $lastCategoryUpdate = Category::max('updated_at');
-        $lastProductUpdate  = Product::max('updated_at');
-        $latestDbUpdate = max(
-            $lastCategoryUpdate ? strtotime($lastCategoryUpdate) : 0,
-            $lastProductUpdate ? strtotime($lastProductUpdate) : 0
-        );
-
-        $cacheKey = 'estimate_categories_' . $latestDbUpdate;
-
-        $categories = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () {
+        $categories = Cache::remember('estimate.categories', 300, function () {
             return Category::where('status', 1)
                 ->with(['products' => function ($query) {
                     $query->whereNotNull('product_regular_price')
                         ->where('product_regular_price', '>', 0)
+                        ->orderBy('sort_order', 'asc')
                         ->orderBy('product_name', 'asc');
                 }])
+                ->orderBy('sort_order', 'asc')
                 ->orderBy('category_name', 'asc')
                 ->get();
         });
 
-        $states = \Illuminate\Support\Facades\Cache::remember('estimate_states', 86400, function () {
+        $states = Cache::remember('estimate.states', 86400, function () {
             return State::orderByRaw("
                 CASE 
                     WHEN state LIKE 'Tamil%Nadu%' THEN 1
@@ -46,24 +44,44 @@ class EstimateController extends Controller
             ")->orderBy('state', 'asc')->get();
         });
 
-        $cities = \Illuminate\Support\Facades\Cache::remember('estimate_cities', 86400, function () {
+        $cities = Cache::remember('estimate.cities', 86400, function () {
             return City::orderBy('city_name')->get(['id', 'city_name', 'state_code']);
         });
 
-        $areas = \Illuminate\Support\Facades\Cache::remember('estimate_areas', 86400, function () {
+        $areas = Cache::remember('estimate.areas', 86400, function () {
             return Area::orderBy('area_name')->get(['id', 'city_id', 'area_name', 'pincode']);
         });
         
-        $globalCharges = \Illuminate\Support\Facades\DB::table('settings')
-            ->whereIn('setting_key', [
-                'extra_charge_1_name', 'extra_charge_1_amount',
-                'extra_charge_2_name', 'extra_charge_2_amount',
-                'extra_discount_1_name', 'extra_discount_1_amount',
-                'extra_discount_2_name', 'extra_discount_2_amount'
-            ])
-            ->pluck('setting_value', 'setting_key');
+        $globalCharges = Cache::remember('estimate.global_charges', 300, function () {
+            return DB::table('settings')
+                ->whereIn('setting_key', [
+                    'extra_charge_1_name', 'extra_charge_1_amount',
+                    'extra_charge_2_name', 'extra_charge_2_amount',
+                    'extra_discount_1_name', 'extra_discount_1_amount',
+                    'extra_discount_2_name', 'extra_discount_2_amount'
+                ])
+                ->pluck('setting_value', 'setting_key');
+        });
 
-        return view('pages.estimate', compact('categories', 'states', 'cities', 'areas', 'globalCharges'));
+        $priceList = Cache::remember('estimate.price_list', 300, fn () => PriceList::first());
+        $settings = Cache::remember('home.settings', 300, fn () => HomeSetting::first() ?? new HomeSetting());
+        $globalSettings = Cache::remember('layout.global_settings', 300, fn () => GlobalSetting::first() ?? new GlobalSetting());
+        $minOrder = $settings->min_order_value ?? 0;
+        $globalGst = $settings->global_gst ?? 0;
+        $showDiscount = $globalSettings->show_discount ?? true;
+
+        return view('pages.estimate', compact(
+            'categories',
+            'states',
+            'cities',
+            'areas',
+            'globalCharges',
+            'priceList',
+            'settings',
+            'minOrder',
+            'globalGst',
+            'showDiscount'
+        ));
     }
 
     public function downloadPDF()
@@ -96,8 +114,10 @@ class EstimateController extends Controller
                 ->with(['products' => function ($query) {
                     $query->whereNotNull('product_regular_price')
                         ->where('product_regular_price', '>', 0)
+                        ->orderBy('sort_order', 'asc')
                         ->orderBy('product_name', 'asc');
                 }])
+                ->orderBy('sort_order', 'asc')
                 ->orderBy('category_name', 'asc')
                 ->get();
 

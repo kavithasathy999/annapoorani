@@ -66,6 +66,78 @@ const ensureBaseSchema = async (connection) => {
   console.log('Database schema initialized or repaired for:', databaseName);
 };
 
+const ensureCategoriesSchema = async (connection) => {
+  const [tableRows] = await connection.query(`SHOW TABLES LIKE 'categories'`);
+  if (tableRows.length === 0) {
+    return;
+  }
+
+  const [columnRows] = await connection.query(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'categories'`,
+    [databaseName]
+  );
+  const existingColumns = new Set(columnRows.map((row) => row.COLUMN_NAME));
+
+  if (!existingColumns.has('sort_order')) {
+    await connection.query(
+      'ALTER TABLE categories ADD COLUMN sort_order INT NOT NULL DEFAULT 0 AFTER category_image'
+    );
+    await connection.query('UPDATE categories SET sort_order = id');
+    console.log('Category sort order schema added for legacy database.');
+  }
+
+  const [indexRows] = await connection.query(
+    `SELECT INDEX_NAME
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'categories' AND INDEX_NAME = 'idx_categories_sort_order'`,
+    [databaseName]
+  );
+
+  if (indexRows.length === 0) {
+    await connection.query('ALTER TABLE categories ADD INDEX idx_categories_sort_order (sort_order, id)');
+  }
+};
+
+const ensureProductsSortOrderSchema = async (connection) => {
+  const [tableRows] = await connection.query(`SHOW TABLES LIKE 'products'`);
+  if (tableRows.length === 0) {
+    return;
+  }
+
+  const [columnRows] = await connection.query(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'products'`,
+    [databaseName]
+  );
+  const existingColumns = new Set(columnRows.map((row) => row.COLUMN_NAME));
+
+  if (!existingColumns.has('sort_order')) {
+    await connection.query(
+      'ALTER TABLE products ADD COLUMN sort_order INT UNSIGNED NOT NULL DEFAULT 0 AFTER product_image'
+    );
+    await connection.query('UPDATE products SET sort_order = id');
+    console.log('Product sort order schema added for legacy database.');
+  }
+
+  const [indexRows] = await connection.query(
+    `SELECT INDEX_NAME
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = ?
+       AND TABLE_NAME = 'products'
+       AND INDEX_NAME = 'idx_products_category_sort_order'`,
+    [databaseName]
+  );
+
+  if (indexRows.length === 0) {
+    await connection.query(
+      'ALTER TABLE products ADD INDEX idx_products_category_sort_order (category_id, sort_order, id)'
+    );
+  }
+};
+
 const ensureSeoDetailsSchema = async (connection) => {
   const [tableRows] = await connection.query(`SHOW TABLES LIKE 'seo_details'`);
   if (tableRows.length === 0) {
@@ -163,6 +235,58 @@ const ensureBlogsSchema = async (connection) => {
   if (alterClauses.length > 0) {
     await connection.query(`ALTER TABLE blogs ${alterClauses.join(', ')}`);
     console.log('Blogs schema updated for legacy database.');
+  }
+};
+
+const ensureContactEnquiriesSchema = async (connection) => {
+  const [tableRows] = await connection.query(`SHOW TABLES LIKE 'contact_enquiries'`);
+
+  if (tableRows.length === 0) {
+    await connection.query(`
+      CREATE TABLE contact_enquiries (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        message TEXT NOT NULL,
+        is_read TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_contact_enquiries_is_read_created_at (is_read, created_at)
+      )
+    `);
+    console.log('Contact enquiries table created.');
+    return;
+  }
+
+  const [columnRows] = await connection.query(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'contact_enquiries'`,
+    [databaseName]
+  );
+  const existingColumns = new Set(columnRows.map((row) => row.COLUMN_NAME));
+
+  if (!existingColumns.has('is_read')) {
+    await connection.query(
+      'ALTER TABLE contact_enquiries ADD COLUMN is_read TINYINT(1) NOT NULL DEFAULT 0 AFTER message'
+    );
+    console.log('Contact enquiry read status column added for legacy database.');
+  }
+
+  const [indexRows] = await connection.query(
+    `SELECT INDEX_NAME
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = ?
+       AND TABLE_NAME = 'contact_enquiries'
+       AND INDEX_NAME = 'idx_contact_enquiries_is_read_created_at'`,
+    [databaseName]
+  );
+
+  if (indexRows.length === 0) {
+    await connection.query(
+      'ALTER TABLE contact_enquiries ADD INDEX idx_contact_enquiries_is_read_created_at (is_read, created_at)'
+    );
   }
 };
 
@@ -285,8 +409,11 @@ const initializeDatabase = async () => {
     connection = await pool.getConnection();
     console.log('MySQL connected successfully. Database:', databaseName);
     await ensureBaseSchema(connection);
+    await ensureCategoriesSchema(connection);
+    await ensureProductsSortOrderSchema(connection);
     await ensureSeoDetailsSchema(connection);
     await ensureBlogsSchema(connection);
+    await ensureContactEnquiriesSchema(connection);
     await ensureSettingsDefaults(connection);
     await ensureDefaultAdmin(connection);
   } catch (error) {

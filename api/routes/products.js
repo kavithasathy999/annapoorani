@@ -7,6 +7,13 @@ const router = express.Router();
 
 const toStockLabel = (value) => Number(value ?? 1) > 0 ? 'In Stock' : 'Out of Stock';
 
+const parseSortOrder = (value) => {
+  const sortOrder = Number(value ?? 0);
+  return Number.isInteger(sortOrder) && sortOrder >= 0 && sortOrder <= 4294967295
+    ? sortOrder
+    : null;
+};
+
 const normalizeProduct = (row) => ({
   ...row,
   name: row.product_name,
@@ -16,7 +23,7 @@ const normalizeProduct = (row) => ({
   content_unit: row.product_content || row.product_quantity || '1 Box',
   stock_status: toStockLabel(row.product_stock),
   description: row.pro_details || row.product_desc || '',
-  sort_order: Number(row.sort_order || row.id || 0),
+  sort_order: Number(row.sort_order ?? row.id ?? 0),
   is_active: Number(row.is_active ?? 1),
   category_name: row.category_name,
   show_mrp_in_pdf: Number(row.show_mrp_in_pdf ?? 1),
@@ -57,7 +64,7 @@ router.get('/', async (req, res) => {
     const normalizedPage = Number(page);
     const normalizedLimit = Number(limit);
     const offset = (normalizedPage - 1) * normalizedLimit;
-    query += ' ORDER BY p.id DESC LIMIT ? OFFSET ?';
+    query += ' ORDER BY p.sort_order ASC, p.id ASC LIMIT ? OFFSET ?';
     params.push(normalizedLimit, offset);
 
     const [rows] = await pool.query(query, params);
@@ -105,6 +112,7 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
     const contentUnit = req.body.content_unit?.trim() || '1 Box';
     const stockValue = req.body.stock_status === 'Out of Stock' ? 0 : 1;
     const description = req.body.description?.trim() || null;
+    const sortOrder = parseSortOrder(req.body.sort_order);
     const showMrpInPdf = req.body.show_mrp_in_pdf !== undefined ? Number(req.body.show_mrp_in_pdf) : 1;
     const showDiscountInPdf = req.body.show_discount_in_pdf !== undefined ? Number(req.body.show_discount_in_pdf) : 1;
     const productGst = req.body.product_gst !== undefined && req.body.product_gst !== '' ? Number(req.body.product_gst) : null;
@@ -115,13 +123,17 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
     if (!name) {
       return res.status(400).json({ success: false, message: 'Product name is required.' });
     }
+    if (sortOrder === null) {
+      return res.status(400).json({ success: false, message: 'Sort order must be a non-negative whole number.' });
+    }
 
     const [result] = await pool.query(
       `INSERT INTO products
        (category_id, product_name, product_mrp_price, product_regular_price, product_image,
-        product_content, product_quantity, product_stock, product_desc, pro_details, show_mrp_in_pdf, show_discount_in_pdf, product_gst, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [categoryId, name, mrpPrice, regularPrice, image, contentUnit, contentUnit, stockValue, description, description, showMrpInPdf, showDiscountInPdf, productGst]
+        sort_order, product_content, product_quantity, product_stock, product_desc, pro_details,
+        show_mrp_in_pdf, show_discount_in_pdf, product_gst, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [categoryId, name, mrpPrice, regularPrice, image, sortOrder, contentUnit, contentUnit, stockValue, description, description, showMrpInPdf, showDiscountInPdf, productGst]
     );
 
     res.status(201).json({ success: true, message: 'Product created', id: result.insertId });
@@ -141,6 +153,7 @@ router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
     const contentUnit = req.body.content_unit?.trim() || '1 Box';
     const stockValue = req.body.stock_status === 'Out of Stock' ? 0 : 1;
     const description = req.body.description?.trim() || null;
+    const sortOrder = parseSortOrder(req.body.sort_order);
     const showMrpInPdf = req.body.show_mrp_in_pdf !== undefined ? Number(req.body.show_mrp_in_pdf) : 1;
     const showDiscountInPdf = req.body.show_discount_in_pdf !== undefined ? Number(req.body.show_discount_in_pdf) : 1;
     const productGst = req.body.product_gst !== undefined && req.body.product_gst !== '' ? Number(req.body.product_gst) : null;
@@ -151,12 +164,16 @@ router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
     if (!name) {
       return res.status(400).json({ success: false, message: 'Product name is required.' });
     }
+    if (sortOrder === null) {
+      return res.status(400).json({ success: false, message: 'Sort order must be a non-negative whole number.' });
+    }
 
     const params = [
       categoryId,
       name,
       mrpPrice,
       regularPrice,
+      sortOrder,
       contentUnit,
       contentUnit,
       stockValue,
@@ -169,7 +186,7 @@ router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
     let query = `
       UPDATE products
       SET category_id = ?, product_name = ?, product_mrp_price = ?, product_regular_price = ?,
-          product_content = ?, product_quantity = ?, product_stock = ?, product_desc = ?,
+          sort_order = ?, product_content = ?, product_quantity = ?, product_stock = ?, product_desc = ?,
           pro_details = ?, show_mrp_in_pdf = ?, show_discount_in_pdf = ?, product_gst = ?, updated_at = NOW()
     `;
 

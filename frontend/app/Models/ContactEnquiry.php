@@ -16,5 +16,10 @@ class ContactEnquiry extends Model
         'email',
         'phone',
         'message',
+        'is_read',
+    ];
+
+    protected $casts = [
+        'is_read' => 'boolean',
     ];
 }

@@ -172,14 +172,16 @@ CREATE TABLE IF NOT EXISTS order_statuses (
 -- ----------------------------
 -- 11. Contact Enquiries Table
 -- ----------------------------
-CREATE TABLE IF NOT EXISTS enquiries (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  email VARCHAR(150) DEFAULT NULL,
-  phone VARCHAR(20) DEFAULT NULL,
+CREATE TABLE IF NOT EXISTS contact_enquiries (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
   message TEXT NOT NULL,
-  is_read TINYINT(1) DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_contact_enquiries_is_read_created_at (is_read, created_at)
 );
 
 -- ----------------------------

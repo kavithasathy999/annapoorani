@@ -7,7 +7,7 @@
              ======================== -->
 <!-- <section class="premium-hero"> -->
     <!-- <div class="hero-parallax-bg"
-        style="background-image: url('{{ $about->banner_image ? rtrim(env('MAIN_URL'), '/') . '/' . ltrim($about->banner_image, '/') : asset('assets/img/ab.jpg') }}');">
+        style="background-image: url('{{ $about->banner_image ? config('services.asset_base_url') . '/' . ltrim($about->banner_image, '/') : asset('assets/img/ab.jpg') }}');">
     </div>
     <div class="hero-glass-overlay"></div> -->
 
@@ -39,11 +39,11 @@
             <div class="col-lg-6">
                 <div class="narrative-visual">
                     <div class="visual-stack main">
-                        <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($about->main_image, '/') }}" alt="Heritage">
+                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($about->main_image, '/') }}" alt="Heritage">
                         <div class="visual-accent-border"></div>
                     </div>
                     <div class="visual-stack sub">
-                        <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($about->main_image, '/') }}" alt="Craft">
+                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($about->main_image, '/') }}" alt="Craft">
                     </div>
                     <div class="experience-pill">
                         <span class="n-years">{{ $settings->welcome_badge_count ?? '10+' }}</span>

@@ -47,7 +47,7 @@
                             <!-- Image -->
                             <div class="blog-card-img-wrap">
                                 @if($blog->image)
-                                    <img src="{{ env('MAIN_URL', '/') . $blog->image }}" alt="{{ $blog->title }}" loading="lazy">
+                                    <img src="{{ config('services.asset_base_url') . '/' . ltrim($blog->image, '/') }}" alt="{{ $blog->title }}" loading="lazy">
                                 @else
                                     <div class="blog-card-no-img">🎆</div>
                                 @endif

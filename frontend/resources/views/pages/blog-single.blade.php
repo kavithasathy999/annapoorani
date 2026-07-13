@@ -15,7 +15,7 @@
         =========================================== -->
     <div class="single-blog-hero">
         @if($blog->image)
-            <div class="single-blog-hero-bg" style="background-image:url('{{ env('MAIN_URL', '/') . $blog->image }}');"></div>
+            <div class="single-blog-hero-bg" style="background-image:url('{{ config('services.asset_base_url') . '/' . ltrim($blog->image, '/') }}');"></div>
         @else
             <div class="single-blog-hero-bg"
                 style="background: radial-gradient(ellipse at center, #2e0800 0%, #0a0000 100%);filter:none;"></div>
@@ -63,7 +63,7 @@
                 {{-- Featured image --}}
                 @if($blog->image)
                     <div class="blog-main-img-wrap">
-                        <img class="blog-main-featured-img" src="{{ env('MAIN_URL', '/') . $blog->image }}"
+                        <img class="blog-main-featured-img" src="{{ config('services.asset_base_url') . '/' . ltrim($blog->image, '/') }}"
                             alt="{{ $blog->title }}">
                         <div class="blog-main-img-overlay"></div>
                     </div>
@@ -159,7 +159,7 @@
                             <a href="{{ route('blog.show', $post->url) }}" class="recent-post-item">
                                 <div class="recent-post-img">
                                     @if($post->image)
-                                        <img src="{{ env('MAIN_URL', '/') . $post->image }}" alt="{{ $post->title }}" loading="lazy">
+                                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($post->image, '/') }}" alt="{{ $post->title }}" loading="lazy">
                                     @else
                                         �9�2
                                     @endif

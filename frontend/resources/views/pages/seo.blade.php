@@ -468,7 +468,7 @@
     <!-- Cinematic Hero -->
     <section class="seo-hero">
         @if($seo->image)
-            <div class="seo-hero-bg parallax-target" style="background-image:url('{{ env('MAIN_URL', '/') . $seo->image }}');"></div>
+            <div class="seo-hero-bg parallax-target" style="background-image:url('{{ config('services.asset_base_url') . '/' . ltrim($seo->image, '/') }}');"></div>
         @else
             <div class="seo-hero-bg parallax-target" style="background: linear-gradient(45deg, #1a0500, #2e0800);"></div>
         @endif
@@ -502,7 +502,7 @@
             <main class="seo-main-card wow fadeInUp">
                 @if($seo->image)
                     <div class="seo-featured-img-wrap">
-                        <img src="{{ env('MAIN_URL', '/') . $seo->image }}" class="seo-featured-img" alt="{{ $seo->alt_key ?? $seo->meta_title }}">
+                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($seo->image, '/') }}" class="seo-featured-img" alt="{{ $seo->alt_key ?? $seo->meta_title }}">
                     </div>
                 @endif
 
@@ -538,7 +538,7 @@
                                 <a href="{{ url($item->url) }}" class="related-item">
                                     <div class="related-item-img">
                                         @if($item->image)
-                                            <img src="{{ env('MAIN_URL', '/') . $item->image }}" alt="{{ $item->meta_title }}">
+                                            <img src="{{ config('services.asset_base_url') . '/' . ltrim($item->image, '/') }}" alt="{{ $item->meta_title }}">
                                         @else
                                             <i class="fa-solid fa-star"></i>
                                         @endif

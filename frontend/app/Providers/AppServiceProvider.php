@@ -22,33 +22,23 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        View::composer('*', function ($view) {
-            static $global_settings = null;
-            static $contact = null;
-            static $seoHeadings = null;
-            static $footerCategories = null;
-
-            if ($global_settings === null) {
-                $global_settings = \App\Models\GlobalSetting::first() ?? new \App\Models\GlobalSetting();
-            }
-
-            if ($contact === null) {
-                $contact = \App\Models\ContactUs::first() ?? new \App\Models\ContactUs();
-            }
-
-            if ($seoHeadings === null) {
-                $seoHeadings = \App\Models\SeoHeading::with('seoDatas')->get();
-            }
-
-            if ($footerCategories === null) {
-                $footerCategories = \App\Models\Category::orderBy('category_name')->take(4)->get();
-            }
+        View::composer('layouts.default', function ($view) {
+            $global_settings = \App\Models\GlobalSetting::first() ?? new \App\Models\GlobalSetting();
+            $contact = \App\Models\ContactUs::first() ?? new \App\Models\ContactUs();
+            $seoHeadings = \App\Models\SeoHeading::with('seoDatas')->get();
+            $footerCategories = \App\Models\Category::where('status', 1)
+                ->orderBy('sort_order')
+                ->orderBy('category_name')
+                ->take(4)
+                ->get(['id', 'category_name']);
+            $pageOff = \App\Models\PageOff::first();
 
             $view->with([
                 'global_settings' => $global_settings,
                 'contact' => $contact,
                 'seoHeadings' => $seoHeadings,
-                'footerCategories' => $footerCategories
+                'footerCategories' => $footerCategories,
+                'pageOff' => $pageOff,
             ]);
         });
     }

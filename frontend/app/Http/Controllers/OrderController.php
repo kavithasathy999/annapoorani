@@ -151,7 +151,7 @@ class OrderController extends Controller
         session()->forget('order_success');
 
         $payment = \App\Models\PaymentSetting::first() ?? new \App\Models\PaymentSetting();
-        $mainUrl = rtrim(env('MAIN_URL', ''), '/');
+        $mainUrl = config('services.asset_base_url');
 
         // Prepare Base64 QR images to avoid CORS issues in PDF generator
         $gpay_qr_base64 = null;

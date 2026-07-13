@@ -9,10 +9,7 @@ class ContactController extends Controller
 {
     public function index()
     {
-        $contact = ContactUs::first();
-        if (!$contact) {
-            $contact = new ContactUs();
-        }
+        $contact = ContactUs::first() ?? new ContactUs();
         return view('pages.contact', compact('contact'));
     }
 

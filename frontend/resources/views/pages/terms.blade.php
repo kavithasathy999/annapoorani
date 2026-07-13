@@ -307,6 +307,241 @@
                 padding: 28px;
             }
         }
+
+        /* Professional document layout and responsive spacing */
+        .terms-hero {
+            height: calc(100svh - 104px);
+            min-height: 520px;
+        }
+
+        .terms-hero-content {
+            width: min(100% - 40px, 760px);
+        }
+
+        .terms-eyebrow {
+            margin-bottom: 14px;
+        }
+
+        .terms-hero h1 {
+            font-size: clamp(2.4rem, 4vw, 3.6rem);
+            margin-bottom: 12px;
+        }
+
+        .terms-section {
+            padding: clamp(48px, 6vw, 76px) 0;
+        }
+
+        .terms-container {
+            width: 100%;
+            max-width: 1080px;
+            padding: 0 24px;
+        }
+
+        .terms-card {
+            width: 100%;
+            padding: clamp(42px, 5vw, 64px);
+            border-radius: 28px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .terms-card::before {
+            border-radius: inherit;
+        }
+
+        .terms-content-body {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            font-size: 1rem !important;
+            line-height: 1.7 !important;
+            overflow-wrap: anywhere;
+        }
+
+        .terms-content-body h1,
+        .terms-content-body h2,
+        .terms-content-body h3,
+        .terms-content-body h4,
+        .terms-content-body h5,
+        .terms-content-body h6 {
+            display: block;
+            font-size: clamp(1.25rem, 1.8vw, 1.55rem) !important;
+            line-height: 1.35 !important;
+            margin: 1.15rem 0 0.7rem !important;
+            letter-spacing: -0.01em;
+        }
+
+        .terms-content-body > h1:first-child,
+        .terms-content-body > h2:first-child,
+        .terms-content-body > h3:first-child {
+            font-size: clamp(1.5rem, 2.2vw, 1.85rem) !important;
+            margin-top: 0 !important;
+        }
+
+        .terms-content-body h2::before {
+            content: none;
+        }
+
+        .terms-content-body p {
+            margin: 0 0 0.85rem !important;
+        }
+
+        .terms-content-body ul,
+        .terms-content-body ol {
+            margin: 0.25rem 0 1rem !important;
+            padding-left: 0 !important;
+        }
+
+        .terms-content-body li {
+            padding-left: 24px;
+            margin-bottom: 0.5rem;
+        }
+
+        .terms-content-body li::before {
+            top: 0.72em;
+            font-size: 0.45rem;
+        }
+
+        .terms-content-body li p {
+            margin: 0 !important;
+        }
+
+        .terms-content-body hr {
+            height: 1px;
+            margin: 1.65rem 0 0 !important;
+            border: 0 !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .terms-content-body br + br {
+            display: none;
+        }
+
+        .terms-footer {
+            margin-top: 40px;
+            padding-bottom: 0;
+        }
+
+        @media (max-width: 991px) {
+            .terms-hero {
+                height: calc(100svh - 104px);
+                min-height: 480px;
+            }
+
+            .terms-section {
+                padding: 52px 0;
+            }
+
+            .terms-container {
+                padding: 0 22px;
+            }
+
+            .terms-card {
+                padding: 42px 38px;
+                border-radius: 24px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .terms-hero {
+                height: calc(100svh - 104px);
+                min-height: 440px;
+                padding: 40px 20px;
+            }
+
+            .terms-hero-content {
+                width: 100%;
+            }
+
+            .terms-eyebrow {
+                font-size: 0.65rem;
+                letter-spacing: 2px;
+                padding: 7px 14px;
+            }
+
+            .terms-hero h1 {
+                font-size: clamp(2rem, 9vw, 2.6rem);
+            }
+
+            .terms-hero p {
+                font-size: 0.85rem;
+                line-height: 1.5;
+            }
+
+            .terms-section {
+                padding: 36px 0 44px;
+            }
+
+            .terms-container {
+                padding: 0 16px;
+            }
+
+            .terms-card {
+                padding: 30px 24px;
+                border-width: 1px !important;
+                border-radius: 20px;
+            }
+
+            .terms-content-body {
+                font-size: 0.95rem !important;
+                line-height: 1.65 !important;
+            }
+
+            .terms-content-body h1,
+            .terms-content-body h2,
+            .terms-content-body h3,
+            .terms-content-body h4,
+            .terms-content-body h5,
+            .terms-content-body h6 {
+                font-size: 1.2rem !important;
+                margin: 1rem 0 0.6rem !important;
+            }
+
+            .terms-content-body > h1:first-child,
+            .terms-content-body > h2:first-child,
+            .terms-content-body > h3:first-child {
+                font-size: 1.4rem !important;
+            }
+
+            .terms-content-body hr {
+                margin-top: 1.35rem !important;
+            }
+
+            .terms-footer {
+                margin-top: 30px;
+            }
+
+            .terms-footer .btn-gold {
+                min-height: 48px;
+                padding: 12px 28px !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .terms-hero {
+                height: calc(100svh - 96px);
+                min-height: 420px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .terms-container {
+                padding: 0 12px;
+            }
+
+            .terms-card {
+                padding: 26px 18px;
+                border-radius: 18px;
+            }
+
+            .terms-content-body {
+                font-size: 0.9rem !important;
+            }
+
+            .terms-content-body li {
+                padding-left: 20px;
+            }
+        }
     </style>
 
     <div class="terms-page">

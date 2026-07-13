@@ -45,6 +45,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const invalidateFrontendCache = require('./middleware/invalidateFrontendCache');
+app.use('/api', invalidateFrontendCache);
+
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

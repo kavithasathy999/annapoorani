@@ -28,7 +28,7 @@
                 <ul class="f-list">
                     <li><a href="{{ url('/') }}">Home</a></li>
                     <li><a href="{{ url('/about') }}">About Us</a></li>
-                    <li><a href="{{ url('/estimate') }}">Catalogue</a></li>
+                    <li><a href="{{ url('/estimate') }}">Products</a></li>
                     <li><a href="{{ url('/blog') }}">Safety Tips</a></li>
                     <li><a href="{{ url('/contact') }}">Contact Us</a></li>
                 </ul>
@@ -71,7 +71,6 @@
         </div>
 
         <!-- SEO MATRIX (Pilled) -->
-        @php $seoHeadings = \App\Models\SeoHeading::with('seoDatas')->get(); @endphp
         @if($seoHeadings->count() > 0)
             <div class="f-seo-matrix">
                 @foreach($seoHeadings as $heading)
@@ -88,8 +87,8 @@
         @endif
 
         <div class="f-bottom">
-            <div class="f-copy">&copy; {{ date('Y') }}Sri Annapoorani Crackers. All Rights Reserved.</div>
-            <div class="f-author">Crafted with ❤️ by <a href="https://saitechnosolutions.com" target="_blank">Sai Techno
+            <div class="f-copy">&copy; {{ date('Y') }} Sri Annapoorani Crackers. All Rights Reserved.</div>
+            <div class="f-author">Developed by <a href="https://saitechnosolutions.com" target="_blank">Sai Techno
                     Solutions</a></div>
         </div>
     </div>
@@ -361,8 +360,12 @@
         padding-top: 50px;
         border-top: 2px solid rgba(0, 0, 0, 0.1);
         display: flex;
-        justify-content: space-between;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
+        gap: 4px;
+        text-align: center;
         font-size: 0.85rem;
         color: rgba(0, 0, 0, 0.5);
     }
@@ -404,9 +407,10 @@
         }
 
         .f-bottom {
-            flex-direction: column;
+            flex-direction: row;
+            justify-content: center;
             text-align: center;
-            gap: 15px;
+            gap: 4px;
         }
 
         .f-seo-row {
@@ -420,6 +424,9 @@
     /* Particle Burst Animation for Footer */
     (function () {
         const parent = document.getElementById('footerParticles');
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!parent || reduceMotion) return;
+
         const create = () => {
             const p = document.createElement('div');
             const size = Math.random() * 3 + 1;
@@ -448,6 +455,8 @@
         }
     `;
         document.head.appendChild(style);
-        setInterval(create, 300);
+        setInterval(() => {
+            if (!document.hidden) create();
+        }, 1000);
     })();
 </script>

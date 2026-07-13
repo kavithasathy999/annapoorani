@@ -2,6 +2,8 @@
 
 return [
 
+    'asset_base_url' => rtrim(env('MAIN_URL', 'http://localhost:5000'), '/'),
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

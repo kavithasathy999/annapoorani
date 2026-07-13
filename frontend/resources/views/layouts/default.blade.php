@@ -13,14 +13,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/animate.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/boxicons.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/flaticon.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/magnific-popup.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/nice-select.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/slick.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/owl.carousel.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/responsive.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script type="speculationrules">
+        {
+            "prefetch": [{
+                "source": "list",
+                "urls": ["/about", "/estimate", "/safety-tips", "/contact", "/terms-condition"],
+                "eagerness": "moderate"
+            }]
+        }
+    </script>
     <style>
         :root {
             --gold: #0b6698;
@@ -112,7 +115,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.18s ease;
         }
         .preloader-inner {
             text-align: center;
@@ -342,14 +345,13 @@
     @include('layouts.header')
     <main class="site-main" id="mainContent">
         @php
-            $pageOff = \App\Models\PageOff::first();
             $isOff = $pageOff && (int) $pageOff->status === 0 && !empty($pageOff->image);
         @endphp
         @if($isOff)
             <section class="maintenance-luxury">
                 <div class="m-container">
                     <div class="m-visual">
-                        <img src="{{ env('MAIN_URL') . $pageOff->image }}" alt="Maintenance">
+                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($pageOff->image, '/') }}" alt="Maintenance">
                     </div>
                     <div class="m-content">
                         <h2>Under <span>Maintenance</span></h2>
@@ -437,28 +439,17 @@
         </div>
     </div>
 
-    <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
-    <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('assets/js/owl.carousel.min.js') }}"></script>
-    <script src="{{ asset('assets/js/magnific-popup.min.js') }}"></script>
-    <script src="{{ asset('assets/js/parallax.min.js') }}"></script>
-    <script src="{{ asset('assets/js/rangeSlider.min.js') }}"></script>
-    <script src="{{ asset('assets/js/nice-select.min.js') }}"></script>
-    <script src="{{ asset('assets/js/meanmenu.min.js') }}"></script>
-    <script src="{{ asset('assets/js/wow.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    @if(session('success'))
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @endif
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                const p = document.getElementById('preloader');
-                if (p) {
-                    p.style.opacity = '0';
-                    p.style.pointerEvents = 'none';
-                    setTimeout(() => p.remove(), 800);
-                }
-            }, 600);
+            const p = document.getElementById('preloader');
+            if (p) {
+                p.style.opacity = '0';
+                p.style.pointerEvents = 'none';
+                setTimeout(() => p.remove(), 200);
+            }
         });
         window.addEventListener('scroll', () => {
             const top = document.documentElement.scrollTop;

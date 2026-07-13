@@ -33,7 +33,7 @@
 
         <!-- Nav -->
         <nav class="hdr-nav" id="hdrNav">
-            <a href="{{ url('/home') }}"        class="hdr-link {{ request()->is('home') ? 'hdr-link--active' : '' }}">Home</a>
+            <a href="{{ url('/') }}"        class="hdr-link {{ request()->is('/') ? 'hdr-link--active' : '' }}">Home</a>
             <a href="{{ url('/about') }}"   class="hdr-link {{ request()->is('about') ? 'hdr-link--active' : '' }}">About</a>
             <a href="{{ url('/estimate') }}" class="hdr-link {{ request()->is('estimate') ? 'hdr-link--active' : '' }}">Products</a>
             <a href="{{ url('/safety-tips') }}"    class="hdr-link {{ request()->is('safety-tips*') ? 'hdr-link--active' : '' }}">Safety Tips</a>
@@ -57,7 +57,7 @@
             </div>
 
             <!-- Download Price List CTA -->
-            <a href="{{ route('pricelist.download') }}" class="hdr-cta hdr-cta-download" download onclick="handleSingleDownload(event, this)">
+            <a href="{{ route('pricelist.download') }}" class="hdr-cta hdr-cta-download">
                 <i class="fa-solid fa-download"></i>
                 <span class="btn-text">Download Price List</span>
             </a>
@@ -86,7 +86,7 @@
             </button>
         </div>
         <nav class="hdr-mobile-nav">
-            <a href="{{ url('/home') }}"        class="hdr-mobile-link {{ request()->is('home') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="{{ url('/') }}"        class="hdr-mobile-link {{ request()->is('/') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-house"></i> Home</a>
             <a href="{{ url('/about') }}"   class="hdr-mobile-link {{ request()->is('about') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-feather-pointed"></i> About</a>
             <a href="{{ url('/estimate') }}" class="hdr-mobile-link {{ request()->is('estimate') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-fire-extinguisher"></i> Products</a>
             <a href="{{ url('/safety-tips') }}"    class="hdr-mobile-link {{ request()->is('safety-tips*') ? 'hdr-mobile-link--active' : '' }}"><i class="fa-solid fa-shield-halved"></i> Safety Tips</a>
@@ -98,7 +98,7 @@
                 <button onclick="changeLang('ta')" class="hdr-mlang-btn" id="btn-ta">தமிழ்</button>
                 <button onclick="changeLang('kn')" class="hdr-mlang-btn" id="btn-kn">ಕನ்ನಡ</button>
             </div>
-            <a href="{{ asset('assets/price-list.pdf') }}" class="hdr-mobile-cta hdr-mobile-cta-download" download>
+            <a href="{{ route('pricelist.download') }}" class="hdr-mobile-cta hdr-mobile-cta-download">
                 <i class="fa-solid fa-download"></i> Download Price List
             </a>
             <a href="{{ url('estimate') }}" class="hdr-mobile-cta">
@@ -562,6 +562,28 @@ langToggle?.addEventListener('click', (e) => {
 document.addEventListener('click', () => langParent?.classList.remove('open'));
 
 /* Language switcher */
+let pendingLanguage = 'en';
+let translateScriptRequested = false;
+
+function applyGoogleTranslation(lang) {
+    const gTranslate = document.querySelector('.goog-te-combo');
+    if (!gTranslate) return false;
+    gTranslate.value = lang;
+    gTranslate.dispatchEvent(new Event('change'));
+    return true;
+}
+
+function loadGoogleTranslate(lang) {
+    pendingLanguage = lang;
+    if (applyGoogleTranslation(lang) || translateScriptRequested) return;
+
+    translateScriptRequested = true;
+    const script = document.createElement('script');
+    script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+    script.async = true;
+    document.head.appendChild(script);
+}
+
 function changeLang(lang) {
     localStorage.setItem('user_lang', lang);
     const labels = { en: 'EN', ta: 'தமிழ்', kn: 'ಕನ್ನಡ' };
@@ -571,19 +593,17 @@ function changeLang(lang) {
         const el = document.getElementById(id);
         if (el && id === 'btn-' + lang) el.classList.add('active');
     });
-    const gTranslate = document.querySelector('.goog-te-combo');
-    if (gTranslate) { gTranslate.value = lang; gTranslate.dispatchEvent(new Event('change')); }
+    if (lang === 'en') {
+        applyGoogleTranslation(lang);
+    } else {
+        loadGoogleTranslate(lang);
+    }
 }
 
 /* Init saved language */
 document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('user_lang') || 'en';
     changeLang(saved);
-    const checkGT = setInterval(() => {
-        const gt = document.querySelector('.goog-te-combo');
-        if (gt) { if (saved !== 'en') { gt.value = saved; gt.dispatchEvent(new Event('change')); } clearInterval(checkGT); }
-    }, 500);
-    setTimeout(() => clearInterval(checkGT), 10000);
 });
 
 /* Ticker marquee engine */
@@ -595,6 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var speed = 0.5;
     var paused = false;
     var cloneAdded = false;
+    var lastFrame = 0;
 
     function init() {
         if (!cloneAdded) {
@@ -605,8 +626,9 @@ document.addEventListener('DOMContentLoaded', () => {
         step();
     }
 
-    function step() {
-        if (!paused) {
+    function step(timestamp) {
+        if (!paused && !document.hidden && timestamp - lastFrame >= 32) {
+            lastFrame = timestamp;
             pos -= speed;
             var setW = track.offsetWidth + 48; /* 48 = gap */
             if (Math.abs(pos) >= setW) pos = 0;
@@ -630,6 +652,13 @@ document.addEventListener('DOMContentLoaded', () => {
 /* Google Translate init */
 function googleTranslateElementInit() {
     new google.translate.TranslateElement({ pageLanguage: 'en', includedLanguages: 'en,ta,kn', autoDisplay: false }, 'google_translate_element');
+    let attempts = 0;
+    const applyPendingLanguage = setInterval(() => {
+        attempts += 1;
+        if (applyGoogleTranslation(pendingLanguage) || attempts >= 20) {
+            clearInterval(applyPendingLanguage);
+        }
+    }, 100);
 }
 
 function handleSingleDownload(event, element) {
@@ -661,4 +690,3 @@ function handleSingleDownload(event, element) {
     }, 3000);
 }
 </script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>

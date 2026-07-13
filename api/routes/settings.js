@@ -721,6 +721,58 @@ const homepageFromDashboard = (payload) => ({
 // SETTINGS (key-value store)
 // ==========================================
 
+const ADDITIONAL_CHARGE_CONFIG = [
+  {
+    label: 'Packing Charge',
+    nameKey: 'extra_charge_1_name',
+    amountKey: 'extra_charge_1_amount',
+  },
+  {
+    label: 'Shipping Charge',
+    nameKey: 'extra_charge_2_name',
+    amountKey: 'extra_charge_2_amount',
+  },
+];
+
+class AdditionalChargeValidationError extends Error {}
+
+const normalizeAdditionalChargeSettings = (settings) => {
+  const normalizedSettings = { ...settings };
+
+  for (const charge of ADDITIONAL_CHARGE_CONFIG) {
+    const hasName = Object.prototype.hasOwnProperty.call(settings, charge.nameKey);
+    const hasAmount = Object.prototype.hasOwnProperty.call(settings, charge.amountKey);
+
+    if (!hasName && !hasAmount) {
+      continue;
+    }
+
+    if (!hasName || !hasAmount) {
+      throw new AdditionalChargeValidationError(`${charge.label} name and amount are required together.`);
+    }
+
+    const rawAmount = settings[charge.amountKey];
+    if (typeof rawAmount === 'boolean' || rawAmount == null || typeof rawAmount === 'object') {
+      throw new AdditionalChargeValidationError(`${charge.label} amount must be a valid number.`);
+    }
+
+    const amountText = String(rawAmount).trim();
+    if (!/^\d+(?:\.\d{1,2})?$/.test(amountText)) {
+      throw new AdditionalChargeValidationError(`${charge.label} amount must be zero or more with up to 2 decimal places.`);
+    }
+
+    const amount = Number(amountText);
+    if (!Number.isFinite(amount) || amount > 999999.99) {
+      throw new AdditionalChargeValidationError(`${charge.label} amount must be between 0 and 999999.99.`);
+    }
+
+    normalizedSettings[charge.nameKey] = charge.label;
+    normalizedSettings[charge.amountKey] = amount.toFixed(2);
+  }
+
+  return normalizedSettings;
+};
+
 // GET /api/settings — Get all settings or by group
 router.get('/', async (req, res) => {
   try {
@@ -746,7 +798,11 @@ router.get('/', async (req, res) => {
 // PUT /api/settings — Bulk update settings
 router.put('/', auth, async (req, res) => {
   try {
-    const settings = req.body; // { key: value, key: value, ... }
+    if (!req.body || Array.isArray(req.body) || typeof req.body !== 'object') {
+      return res.status(400).json({ success: false, message: 'Settings payload must be an object.' });
+    }
+
+    const settings = normalizeAdditionalChargeSettings(req.body);
     for (const [key, value] of Object.entries(settings)) {
       await pool.query(
         'INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
@@ -755,7 +811,8 @@ router.put('/', auth, async (req, res) => {
     }
     res.json({ success: true, message: 'Settings saved' });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    const isValidationError = error instanceof AdditionalChargeValidationError;
+    res.status(isValidationError ? 400 : 500).json({ success: false, message: error.message });
   }
 });
 
@@ -844,11 +901,12 @@ router.get('/store', async (req, res) => {
 // PUT /api/settings/store
 router.put('/store', auth, storeConfigUpload, async (req, res) => {
   try {
-    const { is_store_open, min_order_value, global_discount, global_gst } = req.body;
+    const { is_store_open, min_order_value, global_discount, global_gst, apply_discount } = req.body;
     const normalizedStoreOpen = Number(is_store_open ?? 1);
     const normalizedMinOrderValue = Number(min_order_value ?? 0);
     const normalizedGlobalDiscount = Number(global_discount ?? 0);
     const normalizedGlobalGst = Number(global_gst ?? 0);
+    const shouldApplyDiscount = apply_discount === true || apply_discount === 'true' || apply_discount === '1';
 
     if (![0, 1].includes(normalizedStoreOpen)) {
       return res.status(400).json({ success: false, message: 'Store status must be 0 or 1.' });
@@ -866,11 +924,23 @@ router.put('/store', auth, storeConfigUpload, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Global GST must be between 0 and 100.' });
     }
 
-    const [discountRows] = await pool.query('SELECT id FROM discounts ORDER BY id ASC LIMIT 1');
+    const [discountRows] = await pool.query('SELECT id FROM discounts ORDER BY id DESC LIMIT 1');
     if (discountRows.length > 0) {
       await pool.query('UPDATE discounts SET discount = ?, updated_at = NOW() WHERE id = ?', [normalizedGlobalDiscount, discountRows[0].id]);
     } else {
       await pool.query('INSERT INTO discounts (discount, created_at, updated_at) VALUES (?, NOW(), NOW())', [normalizedGlobalDiscount]);
+    }
+
+    let updatedProducts = 0;
+    if (shouldApplyDiscount) {
+      const [discountResult] = await pool.query(
+        `UPDATE products
+         SET product_regular_price = ROUND(product_mrp_price * (100 - ?) / 100, 2),
+             updated_at = NOW()
+         WHERE product_mrp_price IS NOT NULL`,
+        [normalizedGlobalDiscount]
+      );
+      updatedProducts = discountResult.affectedRows;
     }
 
     const [pageOffRows] = await pool.query('SELECT * FROM page_off ORDER BY id ASC LIMIT 1');
@@ -883,7 +953,11 @@ router.put('/store', auth, storeConfigUpload, async (req, res) => {
 
     await updateSingleRow('home_settings', { min_order_value: normalizedMinOrderValue, global_gst: normalizedGlobalGst });
 
-    res.json({ success: true, message: 'Store config updated' });
+    res.json({
+      success: true,
+      message: shouldApplyDiscount ? 'Global discount applied to products' : 'Store config updated',
+      updated_products: updatedProducts,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -2160,8 +2234,18 @@ router.delete('/brands/:id', auth, async (req, res) => {
 router.get('/enquiries', auth, async (req, res) => {
   try {
     const { search, is_read, start_date, end_date } = req.query;
+    const normalizedIsRead = is_read === undefined
+      ? null
+      : is_read === '0' || is_read === '1'
+        ? Number(is_read)
+        : undefined;
+
+    if (normalizedIsRead === undefined) {
+      return res.status(400).json({ success: false, message: 'is_read filter must be 0 or 1.' });
+    }
+
     let query = `
-      SELECT id, name, email, phone, message, 0 AS is_read, created_at
+      SELECT id, name, email, phone, message, is_read, created_at, updated_at
       FROM contact_enquiries
       WHERE 1 = 1
     `;
@@ -2170,6 +2254,11 @@ router.get('/enquiries', auth, async (req, res) => {
     if (search) {
       query += ' AND (name LIKE ? OR email LIKE ? OR phone LIKE ? OR message LIKE ?)';
       params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    if (normalizedIsRead !== null) {
+      query += ' AND is_read = ?';
+      params.push(normalizedIsRead);
     }
 
     if (start_date) {
@@ -2193,19 +2282,33 @@ router.get('/enquiries', auth, async (req, res) => {
 
 router.put('/enquiries/:id/read', auth, async (req, res) => {
   try {
+    const enquiryId = Number(req.params.id);
     const isRead = req.body?.is_read;
     const normalizedIsRead = isRead === true || isRead === 1 || isRead === '1' ? 1 : isRead === false || isRead === 0 || isRead === '0' ? 0 : null;
+
+    if (!Number.isInteger(enquiryId) || enquiryId <= 0) {
+      return res.status(400).json({ success: false, message: 'Enquiry id is invalid.' });
+    }
 
     if (normalizedIsRead == null) {
       return res.status(400).json({ success: false, message: 'is_read must be true or false.' });
     }
 
-    const [rows] = await pool.query('SELECT id FROM contact_enquiries WHERE id = ?', [req.params.id]);
+    const [rows] = await pool.query('SELECT id FROM contact_enquiries WHERE id = ?', [enquiryId]);
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Enquiry not found.' });
     }
 
-    res.json({ success: true, message: `Enquiry marked as ${normalizedIsRead ? 'read' : 'unread'}.` });
+    await pool.query(
+      'UPDATE contact_enquiries SET is_read = ?, updated_at = NOW() WHERE id = ?',
+      [normalizedIsRead, enquiryId]
+    );
+
+    res.json({
+      success: true,
+      message: `Enquiry marked as ${normalizedIsRead ? 'read' : 'unread'}.`,
+      data: { id: enquiryId, is_read: normalizedIsRead },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -12,14 +12,14 @@ const normalizeCategory = (row) => ({
   data_id: row.data_id || `CAT-${String(row.id).padStart(3, '0')}`,
   name: row.category_name,
   image: row.category_image,
-  sort_order: Number(row.sort_order || row.id || 0),
+  sort_order: Number(row.sort_order ?? row.id ?? 0),
   is_active: Number(row.status ?? 1),
 });
 
 // GET /api/categories
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM categories ORDER BY id ASC');
+    const [rows] = await pool.query('SELECT * FROM categories ORDER BY sort_order ASC, id ASC');
     res.json({ success: true, data: rows.map(normalizeCategory) });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -42,6 +42,7 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
   try {
     const name = req.body.name?.trim();
     const isActive = Number(req.body.is_active ?? 1);
+    const sortOrder = Math.max(0, Math.trunc(Number(req.body.sort_order) || 0));
 
     if (!name) {
       if (req.file) {
@@ -58,15 +59,21 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
     const image = req.file ? `/uploads/${req.file.filename}` : req.body.image?.trim() || null;
 
     const [result] = await pool.query(
-      'INSERT INTO categories (category_name, category_image, status, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
-      [name, image, isActive]
+      'INSERT INTO categories (category_name, category_image, sort_order, status, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
+      [name, image, sortOrder, isActive]
     );
 
     res.status(201).json({
       success: true,
       message: 'Category created',
       id: result.insertId,
-      data: normalizeCategory({ id: result.insertId, category_name: name, category_image: image, status: isActive }),
+      data: normalizeCategory({
+        id: result.insertId,
+        category_name: name,
+        category_image: image,
+        sort_order: sortOrder,
+        status: isActive,
+      }),
     });
   } catch (error) {
     if (req.file) {
@@ -81,6 +88,7 @@ router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
   try {
     const name = req.body.name?.trim();
     const isActive = Number(req.body.is_active ?? 1);
+    const sortOrder = Math.max(0, Math.trunc(Number(req.body.sort_order) || 0));
 
     if (!name) {
       if (req.file) {
@@ -122,8 +130,8 @@ router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
     }
 
     const [result] = await pool.query(
-      'UPDATE categories SET category_name = ?, category_image = ?, status = ?, updated_at = NOW() WHERE id = ?',
-      [name, image, isActive, req.params.id]
+      'UPDATE categories SET category_name = ?, category_image = ?, sort_order = ?, status = ?, updated_at = NOW() WHERE id = ?',
+      [name, image, sortOrder, isActive, req.params.id]
     );
 
     if (result.affectedRows === 0) {

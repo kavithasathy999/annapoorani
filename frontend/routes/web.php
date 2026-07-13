@@ -12,7 +12,6 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\SeoController;
-use App\Http\Controllers\ThemeSettingController;
 
 Route::get('/new', function () {
     $banners  = \App\Models\BannerImage::orderBy('banner_position', 'asc')->get();
@@ -28,8 +27,14 @@ Route::get('/new', function () {
 
     return view('pages.new', compact('banners', 'products', 'settings', 'brands'));
 });
-Route::redirect('/', '/estimate');
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+Route::get('/', function () {
+    if (session()->has('visited')) {
+        return app(App\Http\Controllers\HomeController::class)->index();
+    }
+    session(['visited' => true]);
+    return redirect('/estimate');
+})->name('home');
+Route::redirect('/home', '/');
 Route::get('/about', [AboutController::class, 'index']);
 Route::get('/safety-tips', function () {
     return view('pages.safety-tips');
@@ -50,10 +55,6 @@ Route::get('/ajax/areas/{cityId}',   [CityController::class, 'getAreas']);
 Route::get('/ajax/charges/{cityId}', [CityController::class, 'getCharges']);
 
 
-Route::get('/{url}', [SeoController::class, 'show'])->name('seo.show');
-
 Route::get('/customer/lookup/{phone}', [CustomerController::class, 'lookup'])->name('customer.lookup');
 
-
-Route::get('/theme.css', [ThemeController::class, 'css'])->name('theme.css');
-
+Route::get('/{url}', [SeoController::class, 'show'])->name('seo.show');

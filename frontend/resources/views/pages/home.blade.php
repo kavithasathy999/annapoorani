@@ -950,6 +950,40 @@
             filter: drop-shadow(0 2px 6px rgba(255, 255, 255, .4));
         }
 
+        /* Keep the rocket opposite the value/dot instead of above it. */
+        .fact-item--rocket {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-rows: auto auto;
+            grid-template-areas:
+                "number icon"
+                "label label";
+            align-items: center;
+            align-content: start;
+            column-gap: clamp(16px, 2vw, 28px);
+            row-gap: 6px;
+        }
+
+        .fact-item--rocket .fact-icon {
+            grid-area: icon;
+            justify-self: end;
+            margin: 0;
+            font-size: clamp(2.1rem, 2.6vw, 2.65rem);
+        }
+
+        .fact-item--rocket .fact-number {
+            grid-area: number;
+            justify-self: start;
+            text-align: left;
+        }
+
+        .fact-item--rocket .fact-label {
+            grid-area: label;
+            justify-self: stretch;
+            text-align: left;
+            margin-top: 0;
+        }
+
         .fact-number,
         .fact-label {
             position: relative;
@@ -1594,15 +1628,41 @@
             border-radius: 14px;
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
             width: 250px;
+            max-height: min(420px, calc(100vh - 180px));
+            max-height: min(420px, calc(100dvh - 180px));
             display: none;
             flex-direction: column;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(11, 102, 152, 0.55) transparent;
+            -webkit-overflow-scrolling: touch;
             z-index: 100;
             padding: 8px 0;
             transform: translateY(-10px);
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .premium-sort-dropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .premium-sort-dropdown::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 10px 0;
+        }
+
+        .premium-sort-dropdown::-webkit-scrollbar-thumb {
+            background: rgba(11, 102, 152, 0.55);
+            border-radius: 999px;
+        }
+
+        .premium-sort-dropdown::-webkit-scrollbar-thumb:hover {
+            background: #0b6698;
         }
 
         .premium-sort-dropdown.show {
@@ -1671,11 +1731,21 @@
             .premium-sort-dropdown {
                 right: auto;
                 left: 50%;
+                width: min(320px, calc(100vw - 32px));
+                max-height: min(380px, calc(60vh - 40px));
+                max-height: min(380px, calc(60dvh - 40px));
                 transform: translateX(-50%) translateY(-10px);
             }
 
             .premium-sort-dropdown.show {
                 transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @media (max-width: 575px) {
+            .premium-sort-dropdown {
+                max-height: min(340px, calc(55vh - 24px));
+                max-height: min(340px, calc(55dvh - 24px));
             }
         }
 
@@ -3814,7 +3884,7 @@
             <div class="hero-slider">
                 @foreach($banners as $index => $banner)
                 @php
-                $bannerUrl = rtrim(env('MAIN_URL'), '/') . '/' . ltrim($banner->banner_image, '/');
+                $bannerUrl = config('services.asset_base_url') . '/' . ltrim($banner->banner_image, '/');
                 $is_video = Str::endsWith($banner->banner_image, ['.mp4', '.webm', '.ogg']);
                 @endphp
                 <div class="slide {{ $index === 0 ? 'active' : '' }}">
@@ -3822,7 +3892,8 @@
                     <!-- Premium Blur Background -->
                     @if(!$is_video)
                     <div class="slide-bg-blur" style="background-image: url('{{ $bannerUrl }}');"></div>
-                    <img src="{{ $bannerUrl }}" class="banner-image" alt="Banner {{ $index }}">
+                    <img src="{{ $bannerUrl }}" class="banner-image" alt="Banner {{ $index }}"
+                        decoding="async" @if($index === 0) fetchpriority="high" @else loading="lazy" @endif>
                     @else
                     <div class="slide-bg-blur" style="background: #000;"></div>
                     <video autoplay muted loop playsinline class="banner-video">
@@ -3858,14 +3929,14 @@
                     <div class="brands-group">
                         @foreach($brands as $brand)
                         <div class="brand-card">
-                            <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($brand->logo, '/') }}" alt="Brand Partner">
+                            <img src="{{ config('services.asset_base_url') . '/' . ltrim($brand->logo, '/') }}" alt="Brand Partner">
                         </div>
                         @endforeach
                     </div>
                     <div class="brands-group">
                         @foreach($brands as $brand)
                         <div class="brand-card">
-                            <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($brand->logo, '/') }}" alt="Brand Partner">
+                            <img src="{{ config('services.asset_base_url') . '/' . ltrim($brand->logo, '/') }}" alt="Brand Partner">
                         </div>
                         @endforeach
                     </div>
@@ -3923,7 +3994,8 @@
         
         <!-- Imagery -->
         <div class="premium-catalogue-images">
-            <img src="{{ asset('assets/img/premium_crackers_boxes.png') }}" alt="Premium Crackers Display" class="premium-img-single">
+            <img src="{{ asset('assets/img/premium_crackers_boxes.png') }}" alt="Premium Crackers Display"
+                class="premium-img-single" loading="lazy" decoding="async">
         </div>
     </div>
 </section>
@@ -3935,9 +4007,10 @@
             <div class="about-img-badge">
                 {{ $settings->welcome_badge_count ?? '25' }}<small>{{ $settings->welcome_badge_label ?? 'Years' }}</small>
             </div>
-            <img class="about-img-main" src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($settings->welcome_image, '/') }}"
-                alt="Crackers Store"> 
-            <img class="about-img-accent" src="{{ asset('assets/images/night_rockets_bg.png') }}" alt="Crackers Store">
+            <img class="about-img-main" src="{{ config('services.asset_base_url') . '/' . ltrim($settings->welcome_image, '/') }}"
+                alt="Crackers Store" loading="lazy" decoding="async">
+            <img class="about-img-accent" src="{{ asset('assets/images/night_rockets_bg.png') }}" alt="Crackers Store"
+                loading="lazy" decoding="async">
         </div>
 
         <div class="about-text-col">
@@ -3964,7 +4037,7 @@
                 $number = (preg_match('/[0-9%+\$₹]/', $parts[0])) ? $parts[0] : '';
                 $label = $number ? ($parts[1] ?? '') : $badge['text'];
                 @endphp
-                <div class="fact-item">
+                <div class="fact-item{{ $loop->iteration === 3 ? ' fact-item--rocket' : '' }}">
                     <span class="fact-icon">{{ $badge['icon'] }}</span>
                     <span class="fact-number">{{ $number ?: '•' }}</span>
                     <div class="fact-label">{{ $label }}</div>
@@ -4003,7 +4076,7 @@
     @if($index === 0)
     <div class="product-card featured-card">
         <div class="product-img-wrap">
-            <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($product->product_image, '/') }}"
+            <img src="{{ config('services.asset_base_url') . '/' . ltrim($product->product_image, '/') }}"
                 alt="{{ $product->product_name }}">
         </div>
         <div class="product-info">
@@ -4020,7 +4093,7 @@
     <div class="product-card">
         <span class="product-num">{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</span>
         <div class="product-img-wrap">
-            <img src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($product->product_image, '/') }}"
+            <img src="{{ config('services.asset_base_url') . '/' . ltrim($product->product_image, '/') }}"
                 alt="{{ $product->product_name }}">
         </div>
         <div class="product-info">
@@ -4043,11 +4116,6 @@
          ======================== -->
 <section class="categories-section">
     <div class="categories-inner">
-        @php
-        // Fetching categories and their products similarly to the estimate page
-        $homeCategories = \App\Models\Category::with('products')->get();
-        @endphp
-
         <div class="section-header-wrapper">
             <div class="section-header">
                 <span class="section-eyebrow">Browse by Type</span>
@@ -4080,14 +4148,16 @@
             @foreach($homeCategories as $category)
             @php
             // Use category_image from DB with robust path handling
-            $mainUrl = rtrim(env('MAIN_URL', url('/')), '/');
+            $mainUrl = config('services.asset_base_url');
             $catImage = $category->category_image
             ? $mainUrl . '/' . ltrim($category->category_image, '/')
             : asset('assets/img/categories/img1.jpg');
             @endphp
             <a href="{{ url('estimate') }}?category={{ urlencode(strtolower($category->category_name)) }}" class="cat-card-premium" data-category="{{ strtolower($category->category_name) }}">
                 <div class="cat-img-stage skeleton-loader">
-                    <img src="{{ $catImage }}" alt="{{ $category->category_name }}" class="cat-real-image" loading="lazy" onload="this.classList.add('loaded'); this.parentElement.classList.remove('skeleton-loader')" onerror="this.src='{{ asset('assets/img/categories/img1.jpg') }}'; this.classList.add('loaded'); this.parentElement.classList.remove('skeleton-loader')">
+                    <img src="{{ $catImage }}" alt="{{ $category->category_name }}" class="cat-real-image"
+                        loading="lazy" decoding="async" onload="this.classList.add('loaded'); this.parentElement.classList.remove('skeleton-loader')"
+                        onerror="this.src='{{ asset('assets/img/categories/img1.jpg') }}'; this.classList.add('loaded'); this.parentElement.classList.remove('skeleton-loader')">
                 </div>
                 <div class="cat-content">
                     <h3 class="cat-title">{{ $category->category_name }}</h3>
@@ -4340,7 +4410,7 @@
 
                 <div class="process-layout">
                     <div class="process-visual">
-                        <img class="process-main-img" src="{{ rtrim(env('MAIN_URL'), '/') . '/' . ltrim($settings->welcome_image, '/') }}"
+                        <img class="process-main-img" src="{{ config('services.asset_base_url') . '/' . ltrim($settings->welcome_image, '/') }}"
 alt="Order Process">
 <div class="process-badge-float">
     <div class="big">80%</div>

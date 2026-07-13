@@ -280,7 +280,7 @@
                 <div class="safety-badge">
                     ESSENTIAL SAFETY GUIDELINES
                 </div>
-                <h2 class="sd-title">Do's & Don'ts for Safe Fireworks</h2>
+                <h2 class="sd-title">Do's & Don't for Safe Fireworks</h2>
                 <div class="safety-title-underline"></div>
             </div>
 

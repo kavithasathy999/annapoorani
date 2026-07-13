@@ -1297,11 +1297,11 @@ body {
     @foreach($banners as $index => $banner)
         @php $is_video = Str::endsWith($banner->banner_image, ['.mp4', '.webm', '.ogg']); @endphp
         <div class="slide {{ $index === 0 ? 'active' : '' }}"
-             @if(!$is_video) style="background-image: url('{{ env('MAIN_URL', '/') . $banner->banner_image }}');" @endif>
+             @if(!$is_video) style="background-image: url('{{ config('services.asset_base_url') . '/' . ltrim($banner->banner_image, '/') }}');" @endif>
 
             @if($is_video)
                 <video autoplay muted loop playsinline class="banner-video">
-                    <source src="{{ env('MAIN_URL', '/') . $banner->banner_image }}" type="video/mp4">
+                    <source src="{{ config('services.asset_base_url') . '/' . ltrim($banner->banner_image, '/') }}" type="video/mp4">
                 </video>
             @endif
         </div>
@@ -1323,8 +1323,8 @@ body {
     <div class="about-inner">
         <div class="about-img-col">
             <div class="about-img-badge">25<small>Years</small></div>
-            <img class="about-img-main" src="{{ env('MAIN_URL', '/') . $settings->welcome_image }}" alt="Crackers Store">
-            <img class="about-img-accent" src="{{ env('MAIN_URL', '/') . $settings->welcome_image }}" alt="">
+            <img class="about-img-main" src="{{ config('services.asset_base_url') . '/' . ltrim($settings->welcome_image, '/') }}" alt="Crackers Store">
+            <img class="about-img-accent" src="{{ config('services.asset_base_url') . '/' . ltrim($settings->welcome_image, '/') }}" alt="">
         </div>
         <div class="about-text-col">
             <div class="about-tag">{{ $settings->hero_eyebrow ?? 'Est. Since 1999' }}</div>
@@ -1384,7 +1384,7 @@ body {
                 @if($index === 0)
                     <div class="product-card featured-card">
                         <div class="product-img-wrap">
-                            <img src="{{ env('MAIN_URL', '/') . $product->product_image }}" alt="{{ $product->product_name }}">
+                            <img src="{{ config('services.asset_base_url') . '/' . ltrim($product->product_image, '/') }}" alt="{{ $product->product_name }}">
                         </div>
                         <div class="product-info">
                             <div class="product-badge">🎆 Featured Pick</div>
@@ -1398,7 +1398,7 @@ body {
                     <div class="product-card">
                         <span class="product-num">{{ str_pad($index+1,2,'0',STR_PAD_LEFT) }}</span>
                         <div class="product-img-wrap">
-                            <img src="{{ env('MAIN_URL', '/') . $product->product_image }}" alt="{{ $product->product_name }}">
+                            <img src="{{ config('services.asset_base_url') . '/' . ltrim($product->product_image, '/') }}" alt="{{ $product->product_name }}">
                         </div>
                         <div class="product-info">
                             <div class="product-name">{{ $product->product_name }}</div>
@@ -1539,7 +1539,7 @@ body {
         <div class="brands-track">
             @foreach($brandsFull as $brand)
                 <div class="brand-card">
-                    <img src="{{ env('MAIN_URL', '/') . $brand->logo }}" alt="Brand Partner">
+                    <img src="{{ config('services.asset_base_url') . '/' . ltrim($brand->logo, '/') }}" alt="Brand Partner">
                 </div>
             @endforeach
         </div>
@@ -1555,7 +1555,7 @@ body {
         </div>
         <div class="process-layout">
             <div class="process-visual">
-                <img class="process-main-img" src="{{ env('MAIN_URL', '/') . $settings->welcome_image }}" alt="Order Process">
+                <img class="process-main-img" src="{{ config('services.asset_base_url') . '/' . ltrim($settings->welcome_image, '/') }}" alt="Order Process">
                 <div class="process-badge-float">
                     <div class="big">80%</div>
                     <div class="small">Discount</div>
