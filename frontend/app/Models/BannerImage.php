@@ -14,5 +14,10 @@ class BannerImage extends Model
     protected $fillable = [
         'banner_image',
         'banner_position',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 }

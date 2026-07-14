@@ -950,40 +950,6 @@
             filter: drop-shadow(0 2px 6px rgba(255, 255, 255, .4));
         }
 
-        /* Keep the rocket opposite the value/dot instead of above it. */
-        .fact-item--rocket {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            grid-template-rows: auto auto;
-            grid-template-areas:
-                "number icon"
-                "label label";
-            align-items: center;
-            align-content: start;
-            column-gap: clamp(16px, 2vw, 28px);
-            row-gap: 6px;
-        }
-
-        .fact-item--rocket .fact-icon {
-            grid-area: icon;
-            justify-self: end;
-            margin: 0;
-            font-size: clamp(2.1rem, 2.6vw, 2.65rem);
-        }
-
-        .fact-item--rocket .fact-number {
-            grid-area: number;
-            justify-self: start;
-            text-align: left;
-        }
-
-        .fact-item--rocket .fact-label {
-            grid-area: label;
-            justify-self: stretch;
-            text-align: left;
-            margin-top: 0;
-        }
-
         .fact-number,
         .fact-label {
             position: relative;
@@ -1961,7 +1927,7 @@
             font-size: clamp(2rem, 3vw, 2.8rem);
             font-weight: 900;
             color: #0b6698;
-            text-shadow: 0 2px 10px rgba(255, 255, 255, .3), 0 0 40px rgba(255, 255, 255, .2);
+            text-shadow: none;
             margin-bottom: 16px;
         }
 
@@ -1970,7 +1936,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            filter: drop-shadow(0 0 16px rgba(255, 255, 255, .6)) drop-shadow(0 2px 4px rgba(255, 255, 255, .3));
+            filter: none;
         }
 
         .how-section .section-bar {
@@ -4032,12 +3998,20 @@
                 @endphp
                 @foreach($dynamicBadges as $badge)
                 @php
-                // Attempt to split number and label for consistent styling
-                $parts = explode(' ', $badge['text'], 2);
-                $number = (preg_match('/[0-9%+\$₹]/', $parts[0])) ? $parts[0] : '';
-                $label = $number ? ($parts[1] ?? '') : $badge['text'];
+                $isMinOrderBadge = $loop->iteration === 3;
+
+                if ($isMinOrderBadge && preg_match('/[0-9][0-9,]*(?:\.[0-9]+)?(?:[%+])?/', $badge['text'], $valueMatch)) {
+                    // Show the extracted value above the complete Min Order text.
+                    $number = $valueMatch[0];
+                    $label = $badge['text'];
+                } else {
+                    // Split the leading number and label for the other badges.
+                    $parts = explode(' ', $badge['text'], 2);
+                    $number = (preg_match('/[0-9%+\$₹]/', $parts[0])) ? $parts[0] : '';
+                    $label = $number ? ($parts[1] ?? '') : $badge['text'];
+                }
                 @endphp
-                <div class="fact-item{{ $loop->iteration === 3 ? ' fact-item--rocket' : '' }}">
+                <div class="fact-item">
                     <span class="fact-icon">{{ $badge['icon'] }}</span>
                     <span class="fact-number">{{ $number ?: '•' }}</span>
                     <div class="fact-label">{{ $label }}</div>
@@ -4053,10 +4027,6 @@
 
     </div>
 </section>
-
-
-
-
 
 {{-- <!-- ========================
          PRODUCTS SECTION

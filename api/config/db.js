@@ -138,6 +138,79 @@ const ensureProductsSortOrderSchema = async (connection) => {
   }
 };
 
+const ensureBannersSchema = async (connection) => {
+  const [tableRows] = await connection.query(`SHOW TABLES LIKE 'banner_images'`);
+  if (tableRows.length === 0) {
+    return;
+  }
+
+  const [columnRows] = await connection.query(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'banner_images'`,
+    [databaseName]
+  );
+  const existingColumns = new Set(columnRows.map((row) => row.COLUMN_NAME));
+
+  if (!existingColumns.has('is_active')) {
+    await connection.query(
+      'ALTER TABLE banner_images ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER banner_position'
+    );
+    console.log('Banner status schema added for legacy database.');
+  }
+};
+
+const ensureBillingOrdersSchema = async (connection) => {
+  const [orderTableRows] = await connection.query(`SHOW TABLES LIKE 'orders'`);
+  if (orderTableRows.length > 0) {
+    const [orderColumnRows] = await connection.query(
+      `SELECT COLUMN_NAME
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'orders'`,
+      [databaseName]
+    );
+    const orderColumns = new Set(orderColumnRows.map((row) => row.COLUMN_NAME));
+
+    if (!orderColumns.has('is_gst_applied')) {
+      await connection.query(
+        'ALTER TABLE orders ADD COLUMN is_gst_applied TINYINT(1) NOT NULL DEFAULT 0 AFTER notes'
+      );
+    }
+    if (!orderColumns.has('total_gst')) {
+      await connection.query(
+        'ALTER TABLE orders ADD COLUMN total_gst DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER is_gst_applied'
+      );
+    }
+  }
+
+  const [slotTableRows] = await connection.query(`SHOW TABLES LIKE 'product_slots'`);
+  if (slotTableRows.length > 0) {
+    const [slotColumnRows] = await connection.query(
+      `SELECT COLUMN_NAME
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'product_slots'`,
+      [databaseName]
+    );
+    const slotColumns = new Set(slotColumnRows.map((row) => row.COLUMN_NAME));
+
+    if (!slotColumns.has('is_gst_applied')) {
+      await connection.query(
+        'ALTER TABLE product_slots ADD COLUMN is_gst_applied TINYINT(1) NOT NULL DEFAULT 0 AFTER qty'
+      );
+    }
+    if (!slotColumns.has('item_gst')) {
+      await connection.query(
+        'ALTER TABLE product_slots ADD COLUMN item_gst DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER is_gst_applied'
+      );
+    }
+    if (!slotColumns.has('product_gst_rate')) {
+      await connection.query(
+        'ALTER TABLE product_slots ADD COLUMN product_gst_rate DECIMAL(5,2) NOT NULL DEFAULT 0 AFTER item_gst'
+      );
+    }
+  }
+};
+
 const ensureSeoDetailsSchema = async (connection) => {
   const [tableRows] = await connection.query(`SHOW TABLES LIKE 'seo_details'`);
   if (tableRows.length === 0) {
@@ -411,6 +484,8 @@ const initializeDatabase = async () => {
     await ensureBaseSchema(connection);
     await ensureCategoriesSchema(connection);
     await ensureProductsSortOrderSchema(connection);
+    await ensureBannersSchema(connection);
+    await ensureBillingOrdersSchema(connection);
     await ensureSeoDetailsSchema(connection);
     await ensureBlogsSchema(connection);
     await ensureContactEnquiriesSchema(connection);

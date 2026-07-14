@@ -465,8 +465,8 @@ router.post('/', auth, async (req, res) => {
     const orderNo = `ORD-${Date.now().toString().slice(-8)}`;
     const [result] = await connection.query(
       `INSERT INTO orders
-        (order_no, customer_id, sub_total, shipping, discount, total, order_type, status, payment_status, notes, is_gst_applied, total_gst)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (order_no, customer_id, sub_total, shipping, discount, total, order_type, status, payment_status, notes, is_gst_applied, total_gst, order_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE())`,
       [
         orderNo,
         normalizedCustomerId,

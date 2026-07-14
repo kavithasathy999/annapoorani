@@ -5,6 +5,15 @@ const upload = require('../middleware/upload');
 
 const router = express.Router();
 
+const normalizeActiveStatus = (value, fallback = 1) => {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+
+  const status = Number(value);
+  return status === 0 || status === 1 ? status : null;
+};
+
 const normalizeBanner = (row) => ({
   ...row,
   name: row.name || `Banner ${row.id}`,
@@ -33,9 +42,15 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
 
     const image = `/uploads/${req.file.filename}`;
     const position = Number(req.body.sort_order) || 0;
+    const isActive = normalizeActiveStatus(req.body.is_active);
+
+    if (isActive === null) {
+      return res.status(400).json({ success: false, message: 'Banner status must be Active or Inactive.' });
+    }
+
     const [result] = await pool.query(
-      'INSERT INTO banner_images (banner_image, banner_position, created_at, updated_at) VALUES (?, ?, NOW(), NOW())',
-      [image, position]
+      'INSERT INTO banner_images (banner_image, banner_position, is_active, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
+      [image, position, isActive]
     );
 
     res.status(201).json({ success: true, message: 'Banner created', id: result.insertId });
@@ -48,8 +63,14 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
 router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
   try {
     const position = Number(req.body.sort_order) || 0;
-    const params = [position];
-    let query = 'UPDATE banner_images SET banner_position = ?, updated_at = NOW()';
+    const isActive = normalizeActiveStatus(req.body.is_active);
+
+    if (isActive === null) {
+      return res.status(400).json({ success: false, message: 'Banner status must be Active or Inactive.' });
+    }
+
+    const params = [position, isActive];
+    let query = 'UPDATE banner_images SET banner_position = ?, is_active = ?, updated_at = NOW()';
 
     if (req.file) {
       query += ', banner_image = ?';

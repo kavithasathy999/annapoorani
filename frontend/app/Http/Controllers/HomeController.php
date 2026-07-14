@@ -16,7 +16,6 @@ class HomeController extends Controller
     {
         try {
             $pageData = Cache::remember('home.page_data', 300, function () {
-                $banners = BannerImage::orderBy('banner_position', 'asc')->get();
                 $settings = HomeSetting::first() ?? new HomeSetting();
                 $featuredIds = collect($settings->featured_product_ids ?? [])->filter()->toArray();
                 $brands = Brand::where('is_active', 1)->orderBy('sort_order', 'asc')->get();
@@ -36,8 +35,13 @@ class HomeController extends Controller
                     ->orderBy('category_name')
                     ->get(['id', 'category_name', 'category_image']);
 
-                return compact('banners', 'products', 'settings', 'brands', 'homeCategories');
+                return compact('products', 'settings', 'brands', 'homeCategories');
             });
+
+            // Keep banner status changes visible immediately instead of serving stale cached banners.
+            $pageData['banners'] = BannerImage::where('is_active', 1)
+                ->orderBy('banner_position', 'asc')
+                ->get();
 
             return view('pages.home', $pageData);
 

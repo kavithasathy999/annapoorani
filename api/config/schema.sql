@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS orders (
   status VARCHAR(50) DEFAULT 'Pending',
   payment_status ENUM('Pending', 'Paid', 'Failed') DEFAULT 'Pending',
   notes TEXT DEFAULT NULL,
+  is_gst_applied TINYINT(1) NOT NULL DEFAULT 0,
+  total_gst DECIMAL(10, 2) NOT NULL DEFAULT 0,
   order_date DATE DEFAULT (CURRENT_DATE),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -182,6 +184,22 @@ CREATE TABLE IF NOT EXISTS contact_enquiries (
   created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_contact_enquiries_is_read_created_at (is_read, created_at)
+);
+
+CREATE TABLE IF NOT EXISTS product_slots (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL,
+  product_id INT NOT NULL,
+  product_name VARCHAR(255) DEFAULT NULL,
+  product_total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  qty DECIMAL(10, 2) NOT NULL DEFAULT 1,
+  is_gst_applied TINYINT(1) NOT NULL DEFAULT 0,
+  item_gst DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  product_gst_rate DECIMAL(5, 2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
 -- ----------------------------
