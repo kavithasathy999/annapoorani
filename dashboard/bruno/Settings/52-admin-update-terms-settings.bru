@@ -1,0 +1,19 @@
+meta {
+  name: PUT Admin Terms Settings
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/settings/terms
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  content-type: application/json
+}
+
+body {
+  {
+    "terms_conditions_html": "<p>These are the updated terms and conditions for Sparkle Fireworks.</p>"
+  }
+}

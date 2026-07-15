@@ -1,0 +1,26 @@
+meta {
+  name: PUT Update SEO Detail
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/settings/seo-details/1
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+body:multipart-form {
+  seo_heading_id: 1
+  meta_title: Crackers Shop Updated
+  meta_description: Updated festival crackers, gift boxes, and online booking.
+  meta_keywords: crackers, fireworks, festival, diwali, updated
+  name: Home SEO Updated
+  description: Updated premium quality fireworks from Sivakasi at best prices.
+  alt_key: Updated premium crackers home banner
+  url: /
+  canonical: /
+  feet_content: <p>Updated premium quality fireworks from Sivakasi at best prices.</p>
+  existing_image: /uploads/seo/existing-image.png
+}

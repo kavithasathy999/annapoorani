@@ -1,0 +1,29 @@
+meta {
+  name: PUT Admin Global Settings
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/settings/global
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+body:multipart-form {
+  company_name: Sparkle Fireworks
+  seo_title: Sparkle Fireworks | Best Crackers Online
+  primary_phone: +91 98765 43210
+  email: support@sparklefireworks.com
+  address: 123 Sparkle Street, Sivakasi, Tamil Nadu, India
+  whatsapp_number: +91 98765 43210
+  footer_content: <p>Premium quality fireworks from Sivakasi.</p>
+  facebook_url: https://facebook.com/sparklefireworks
+  instagram_url: https://instagram.com/sparklefireworks
+  twitter_url: https://x.com/sparklefireworks
+  linkedin_url: https://linkedin.com/company/sparklefireworks
+  youtube_url: https://youtube.com/@sparklefireworks
+  offer_text_html: <p>Celebrate with festive discounts this season.</p>
+  google_analytics_id: G-ABCDEFG123
+}

@@ -1,0 +1,53 @@
+meta {
+  name: PUT Homepage Settings
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/settings/homepage
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+body:multipart-form {
+  hero_eyebrow: WELCOME TO SPARKLE
+  hero_heading_html: <p>Welcome to<br />The Bluvel Crackers!</p>
+  hero_description_html: <p>Since 2026, <strong>The Bluvel Crackers</strong> has been the No.1 destination for all your celebration needs.</p><p>We have the perfect crackers to make every occasion unforgettable.</p>
+  hero_badge_1_text: Trustable Crackers Shop In Sivakasi
+  hero_badge_2_text: 80% Off Sale
+  hero_badge_3_text: Free Shipping ₹3000+
+  hero_cta_text: Read More About Bluvel Crackers
+  hero_cta_link: /about
+  featured_products_eyebrow: Our Best HandPicked Products
+  featured_products_heading: Don't Miss This Products
+  featured_product_ids: [1,2,3,4,5,6,7]
+  why_choose_eyebrow: Our Promise
+  why_choose_title: Why Choose Us
+  why_choose_subtitle: Built on quality, value, and trust.
+  why_choose_pillar_1_title: Best Quality
+  why_choose_pillar_1_text: Every cracker is sourced directly from trusted manufacturers.
+  why_choose_pillar_2_title: Wide Variety
+  why_choose_pillar_2_text: From sparklers to aerial shells, our catalogue covers every celebration.
+  why_choose_pillar_3_title: Safety First
+  why_choose_pillar_3_text: All products meet government guidelines and safety expectations.
+  why_choose_pillar_4_title: Trusted Brand
+  why_choose_pillar_4_text: Thousands of happy customers rely on us season after season.
+  why_choose_stat_1_label: Availability
+  why_choose_stat_1_value: 100
+  why_choose_stat_2_label: Best Delivery
+  why_choose_stat_2_value: 100
+  why_choose_stat_3_label: Easy Ordering
+  why_choose_stat_3_value: 100
+  why_choose_stat_4_label: Customer Support
+  why_choose_stat_4_value: 100
+  why_choose_bottom_1_value: 5000+
+  why_choose_bottom_1_label: Happy Customers
+  why_choose_bottom_2_value: 200+
+  why_choose_bottom_2_label: Products
+  why_choose_bottom_3_value: 80%
+  why_choose_bottom_3_label: Max Discount
+  why_choose_bottom_4_value: Pan India
+  why_choose_bottom_4_label: Delivery
+}

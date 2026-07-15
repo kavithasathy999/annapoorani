@@ -1,0 +1,25 @@
+meta {
+  name: PUT Contact Page Settings
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/settings/contact-page
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  content-type: application/json
+}
+
+body {
+  {
+    "primary_phone": "+91 98765 43210",
+    "email": "support@sparklefireworks.com",
+    "address": "123 Sparkle Street, Sivakasi, Tamil Nadu, India",
+    "contact_intro_eyebrow": "Contact Us",
+    "contact_intro_heading": "Have Any Questions?",
+    "contact_intro_description_html": "<p>Have an inquiry or some feedback for us? Use the form below to contact our team.</p>",
+    "contact_map_iframe_html": "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3916.234!2d77.004!3d9.451\" loading=\"lazy\"></iframe>"
+  }
+}

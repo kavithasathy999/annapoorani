@@ -1,0 +1,12 @@
+meta {
+  name: GET Admin Terms Settings
+  type: http
+}
+
+get {
+  url: {{baseUrl}}/settings/terms
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}

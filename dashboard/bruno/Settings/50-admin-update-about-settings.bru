@@ -1,0 +1,37 @@
+meta {
+  name: PUT About Settings
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/settings/about
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+body:multipart-form {
+  story_eyebrow: Est. 2020 - Sivakasi
+  story_heading_html: <p>About<br />The Bluvel Crackers</p>
+  story_description_html: <p>Located in the heart of <strong>Sivakasi</strong>, The Crackers has been a symbol of festivity since 2020.</p>
+  badge_1_text: Since 2016
+  badge_2_text: Sivakasi Based
+  badge_3_text: Safety Certified
+  products_count: 20
+  customers_count: 12586
+  success_percentage: 79
+  purpose_eyebrow: What Drives Us
+  purpose_heading: Our Purpose & Values
+  pillar_1_title: Our Purpose
+  pillar_1_text: We create joyful celebrations through safe, reliable fireworks experiences.
+  pillar_2_title: Our Dedication
+  pillar_2_text: We deliver wide variety, timely service, and dependable support for every order.
+  pillar_3_title: Our Quality
+  pillar_3_text: Every cracker is sourced responsibly and checked to meet high safety expectations.
+  pillar_4_title: Our Promise
+  pillar_4_text: We focus on honest pricing, trusted products, and memorable festive moments.
+  cta_banner_text: Let's Make a Difference in the Lives of Others
+  cta_button_text: ESTIMATE NOW
+  cta_button_link: /estimate
+}

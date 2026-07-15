@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Annapoorani Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      #preloader {
+        position: fixed;
+        inset: 0;
+        background: #FFFFFF;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s ease;
+      }
+      .preloader-inner {
+        text-align: center;
+        padding: 24px 28px;
+        background: rgba(229, 58, 18, 0.06);
+        backdrop-filter: blur(18px);
+        border-radius: 24px;
+        border: 1px solid rgba(229, 58, 18, 0.08);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+      }
+      .preloader-logo {
+        width: 220px;
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 20px;
+        filter: none;
+        animation: preloaderPulse 1.8s ease-in-out infinite;
+      }
+      .preloader-bar {
+        width: 180px;
+        height: 4px;
+        background: rgba(229, 58, 18, 0.12);
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+      }
+      .preloader-progress {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        background: linear-gradient(135deg, #0c689b, #043048);
+        width: 100%;
+        border-radius: 10px;
+        opacity: 0.8;
+      }
+      @keyframes preloaderPulse {
+        0%, 100% { opacity: 0.8; transform: translateY(0); }
+        50% { opacity: 1; transform: translateY(-2px); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="preloader">
+      <div class="preloader-inner">
+        <img src="/logo1.png" class="preloader-logo" alt="Loading">
+        <div class="preloader-bar">
+          <div class="preloader-progress"></div>
+        </div>
+      </div>
+    </div>
+    <div id="root"></div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          const p = document.getElementById('preloader');
+          if (p) {
+            p.style.opacity = '0';
+            p.style.pointerEvents = 'none';
+            setTimeout(() => p.remove(), 800);
+          }
+        }, 600);
+      });
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

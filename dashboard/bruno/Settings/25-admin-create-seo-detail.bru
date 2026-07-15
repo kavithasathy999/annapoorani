@@ -1,0 +1,26 @@
+meta {
+  name: POST Create SEO Detail
+  type: http
+}
+
+post {
+  url: {{baseUrl}}/settings/seo-details
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+body:multipart-form {
+  seo_heading_id: 1
+  meta_title: Crackers Shop
+  meta_description: Festival crackers, gift boxes, and online booking.
+  meta_keywords: crackers, fireworks, festival, diwali
+  name: Home SEO
+  description: Premium quality fireworks from Sivakasi at best prices.
+  alt_key: Premium crackers home banner
+  url: /
+  canonical: /
+  feet_content: <p>Premium quality fireworks from Sivakasi at best prices.</p>
+  image: "C:\\replace-with-image\\seo-image.png"
+}

@@ -1,0 +1,27 @@
+meta {
+  name: PUT Payment Settings
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/settings/payment
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+body:multipart-form {
+  bank_holder: Sparkle Fireworks Pvt Ltd
+  bank_account: 0000111122223333
+  bank_name: HDFC Bank
+  bank_ifsc: HDFC0001234
+  bank_branch: Sivakasi Main
+  gpay_label: Google Pay
+  gpay_number: +91 9876543210
+  phonepe_label: PhonePe
+  phonepe_number: +91 9876543210
+  payment_instructions_html: <p>After successful payment, please send the screenshot to our Whatsapp number.</p>
+  payment_page_title: Payment Information
+  payment_page_heading_html: <p>Please select an option to pay</p>
+}

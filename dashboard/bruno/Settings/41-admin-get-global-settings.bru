@@ -1,0 +1,12 @@
+meta {
+  name: GET Admin Global Settings
+  type: http
+}
+
+get {
+  url: {{baseUrl}}/settings/global
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
