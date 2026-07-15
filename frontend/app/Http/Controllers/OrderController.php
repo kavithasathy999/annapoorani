@@ -39,7 +39,31 @@ class OrderController extends Controller
         }
 
         try {
-            $result = DB::transaction(function () use ($request, $cartItems) {
+            $globalCharges = DB::table('settings')
+                ->whereIn('setting_key', ['additional_charge_name', 'additional_charge_percentage'])
+                ->pluck('setting_value', 'setting_key')
+                ->toArray();
+
+            $chargeName = trim((string) ($globalCharges['additional_charge_name'] ?? ''));
+            $chargePercentage = min(max((float) ($globalCharges['additional_charge_percentage'] ?? 0), 0), 100);
+            $productSubtotal = collect($cartItems)->sum(fn ($item) => (float) ($item['total'] ?? 0));
+            $totalGst = collect($cartItems)->sum(fn ($item) => (float) ($item['item_gst'] ?? 0));
+            $additionalChargeAmount = $chargeName !== '' && $chargePercentage > 0
+                ? round(($productSubtotal * $chargePercentage) / 100, 2)
+                : 0;
+            $netTotal = round($productSubtotal + $totalGst + $additionalChargeAmount, 2);
+            $actualTotal = collect($cartItems)->sum(
+                fn ($item) => (float) ($item['actual'] ?? $item['price']) * (int) $item['qty']
+            );
+            $globalCharges['additional_charge_amount'] = $additionalChargeAmount;
+
+            $result = DB::transaction(function () use (
+                $request,
+                $cartItems,
+                $netTotal,
+                $chargeName,
+                $additionalChargeAmount
+            ) {
 
                 $lastId     = DB::table('product_orders')->lockForUpdate()->max('id') ?? 0;
                 $newOrderId = 'order' . str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
@@ -59,9 +83,11 @@ class OrderController extends Controller
                     'order_no'  => $newOrderId,
                     'customer_id'   => $customer->id,
                     'sub_total' => $request->sub_total,
-                    'shipping' => 0,
+                    'shipping' => $additionalChargeAmount,
                     'discount' => 0,
-                    'total'     => $request->total,
+                    'total'     => $netTotal,
+                    'additional_charge_type' => $chargeName ?: null,
+                    'additional_charge_amount' => $additionalChargeAmount,
                     'status'    => 'Pending',
                     'order_type' => 'ONLINE',
                     'order_date' => now()->format('Y-m-d')
@@ -81,24 +107,10 @@ class OrderController extends Controller
                 return $newOrderId;
             });
 
-            // ── Compute totals ──
-            $netTotal    = (float) $request->total;
-            $actualTotal = collect($cartItems)->sum(
-                fn($i) => (float)($i['actual'] ?? $i['price']) * (int)$i['qty']
-            );
-
             // ── Send confirmation email ──
             try {
                 $payment = \App\Models\PaymentSetting::first() ?? new \App\Models\PaymentSetting();
                 
-                $globalCharges = \Illuminate\Support\Facades\DB::table('settings')
-                    ->whereIn('setting_key', [
-                        'extra_charge_1_name', 'extra_charge_1_amount',
-                        'extra_charge_2_name', 'extra_charge_2_amount'
-                    ])
-                    ->pluck('setting_value', 'setting_key')
-                    ->toArray();
-
                 Mail::to($request->email)->send(new EstimateMail(
                     orderId:       $result,
                     cartItems:     $cartItems,

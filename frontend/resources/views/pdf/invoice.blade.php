@@ -165,7 +165,7 @@ if (!function_exists('numberToWords')) {
             <div class="company-name">SRI ANNAPOORANI CRACKERS</div>
             <div class="company-details">
                 1/205-13, Sattur to Virudhunagar Main Road, R R<br>
-                Nagar, Virudhunagar district.<br>
+                Nagar, Virudhunagar district-626204.<br>
                 Phone no: 9360353597<br>
                 Email: sriannapooranicrackers@gmail.com
             </div>
@@ -239,11 +239,21 @@ if (!function_exists('numberToWords')) {
             </div>
         </td>
         <td class="footer-right">
+            @php
+                $productSubtotal = collect($items)->sum(fn ($item) => floatval($item->product_total ?? 0));
+                $additionalChargeAmount = floatval($order->additional_charge_amount ?? 0);
+            @endphp
             <table class="summary-table">
                 <tr>
                     <td>Sub Total</td>
-                    <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($netTotalAmount, 2) }}</td>
+                    <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($productSubtotal, 2) }}</td>
                 </tr>
+                @if(!empty($order->additional_charge_type) && $additionalChargeAmount > 0)
+                <tr>
+                    <td>{{ $order->additional_charge_type }}</td>
+                    <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($additionalChargeAmount, 2) }}</td>
+                </tr>
+                @endif
                 <tr class="summary-total">
                     <td>Total</td>
                     <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($netTotalAmount, 2) }}</td>
@@ -251,14 +261,6 @@ if (!function_exists('numberToWords')) {
                 <tr>
                     <td>Received</td>
                     <td style="white-space: nowrap;">Rs&nbsp;{{ number_format($netTotalAmount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td>Previous Balance</td>
-                    <td style="white-space: nowrap;">Rs&nbsp;0.00</td>
-                </tr>
-                <tr style="border-bottom: 2px solid #000;">
-                    <td>Current Balance</td>
-                    <td style="white-space: nowrap;">Rs&nbsp;0.00</td>
                 </tr>
             </table>
         </td>

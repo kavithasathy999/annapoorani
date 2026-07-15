@@ -542,12 +542,13 @@
     z-index: -1;
 }
 
-table { width: 100%; border-collapse: collapse; border-spacing: 0; border: 1px solid #000000 !important; }
+table { width: 100%; border-collapse: collapse; border-spacing: 0; border: 1px solid #000000 !important; border-top: 0 !important; }
 
 thead th {
     position: sticky;
     top: 76px;
     background: #ffffff;
+    background-clip: padding-box;
     z-index: 900;
     padding: 20px;
     font-size: 0.8rem;
@@ -556,7 +557,36 @@ thead th {
     letter-spacing: 2px;
     color: var(--muted);
     border: 1px solid #000000 !important;
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    box-shadow:
+        inset 0 1px 0 #000000,
+        inset 0 -1px 0 #000000;
     text-align: center;
+}
+
+thead th::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: #000000;
+    pointer-events: none;
+}
+
+thead th:first-child::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 1px;
+    background: #000000;
+    pointer-events: none;
 }
 
 .product-row { 
@@ -577,6 +607,7 @@ thead th {
 /* Desktop & Tablet Table Column Matrix */
 @media (min-width: 851px) {
     table { table-layout: fixed; }
+    tbody td { border-top: 0 !important; }
     th:nth-child(1) { width: 110px; } /* Image */
     th:nth-child(2) { width: auto; text-align: left; padding-left: 25px; } /* Product Name */
     th:nth-child(3) { width: 12%; } /* Box Content */
@@ -1973,11 +2004,57 @@ thead th,
 
     .estimate-content .table-wrap > table {
         border: 1px solid #000000 !important;
+        border-top: 0 !important;
     }
 
     .estimate-content .category td {
         box-sizing: border-box !important;
         padding-left: 24px !important;
+    }
+}
+
+/* Responsive minimum-order toast shown from the Order Now action. */
+.minimum-order-toast-container {
+    z-index: 10000 !important;
+    padding: 16px !important;
+}
+
+.minimum-order-toast {
+    width: min(390px, calc(100vw - 32px)) !important;
+    max-width: 100% !important;
+    border-radius: 14px !important;
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.2) !important;
+}
+
+.minimum-order-toast .swal2-title {
+    font-size: 1rem !important;
+    line-height: 1.35 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+}
+
+.minimum-order-toast .swal2-html-container {
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+}
+
+@media (max-width: 767px) {
+    .minimum-order-toast-container {
+        padding: 12px !important;
+    }
+
+    .minimum-order-toast {
+        width: calc(100vw - 24px) !important;
+    }
+
+    .minimum-order-toast .swal2-title {
+        font-size: 0.875rem !important;
+    }
+
+    .minimum-order-toast .swal2-html-container {
+        font-size: 0.75rem !important;
     }
 }
 </style>
@@ -2181,17 +2258,10 @@ thead th,
                 <div class="cart-summary-row" id="cartGstRow" style="display:none; color: #555; font-weight: 700; margin-top:10px;"><span>GST</span><span id="cartGstAmount">₹0</span></div>
                 <div class="cart-summary-row" style="color: #16A34A; font-weight: 700; margin-top:10px;"><span>Your Savings</span><span id="cartSave">- ₹0</span></div>
                 
-                @if(!empty($globalCharges['extra_charge_1_name']) && floatval($globalCharges['extra_charge_1_amount'] ?? 0) > 0)
+                @if(!empty($globalCharges['additional_charge_name']) && floatval($globalCharges['additional_charge_percentage'] ?? 0) > 0)
                     <div class="cart-summary-row" style="color: #475569; font-weight: 600; margin-top:5px;">
-                        <span>{{ $globalCharges['extra_charge_1_name'] }}</span>
-                        <span id="extraCharge1Val">₹{{ number_format(floatval($globalCharges['extra_charge_1_amount']), 2) }}</span>
-                    </div>
-                @endif
-                
-                @if(!empty($globalCharges['extra_charge_2_name']) && floatval($globalCharges['extra_charge_2_amount'] ?? 0) > 0)
-                    <div class="cart-summary-row" style="color: #475569; font-weight: 600; margin-top:5px;">
-                        <span>{{ $globalCharges['extra_charge_2_name'] }}</span>
-                        <span id="extraCharge2Val">₹{{ number_format(floatval($globalCharges['extra_charge_2_amount']), 2) }}</span>
+                        <span>{{ $globalCharges['additional_charge_name'] }}</span>
+                        <span id="additionalChargeVal">₹0.00</span>
                     </div>
                 @endif
 
@@ -2349,8 +2419,9 @@ thead th,
 <script>
     const MIN_ORDER = {{ $minOrder }};
     const GLOBAL_GST = {{ $globalGst }};
-    let extraCharge1 = {{ floatval($globalCharges['extra_charge_1_amount'] ?? 0) }};
-    let extraCharge2 = {{ floatval($globalCharges['extra_charge_2_amount'] ?? 0) }};
+    const additionalChargeName = @json($globalCharges['additional_charge_name'] ?? '');
+    const additionalChargePercentage = {{ floatval($globalCharges['additional_charge_percentage'] ?? 0) }};
+    let additionalChargeAmount = 0;
 
     function handleStateChange() {
         const stateSelect = document.getElementById("checkoutState");
@@ -2560,8 +2631,8 @@ thead th,
         document.getElementById("youSave").innerText = (actualTotal - netTotal).toLocaleString('en-IN');
         document.getElementById("cartCount").innerText = cartCount;
 
-        let additionalCharge = extraCharge1 + extraCharge2;
-        const netWithCharge = netTotal + additionalCharge + totalGst;
+        additionalChargeAmount = Math.round(((netTotal * additionalChargePercentage) / 100 + Number.EPSILON) * 100) / 100;
+        const netWithCharge = netTotal + additionalChargeAmount + totalGst;
 
         document.getElementById("cartActual").innerText = '₹' + actualTotal.toLocaleString('en-IN');
         document.getElementById("cartSave").innerText = '- ₹' + (actualTotal - netTotal).toLocaleString('en-IN');
@@ -2572,6 +2643,14 @@ thead th,
             document.getElementById("cartGstAmount").innerText = '₹' + totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 });
         } else {
             gstRow.style.display = "none";
+        }
+
+        const additionalChargeValue = document.getElementById("additionalChargeVal");
+        if (additionalChargeValue) {
+            additionalChargeValue.innerText = '₹' + additionalChargeAmount.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
         
         document.getElementById("cartNet").innerText = '₹' + netWithCharge.toLocaleString('en-IN', { maximumFractionDigits: 2 });
@@ -2585,6 +2664,8 @@ thead th,
         updateMinOrderWidget(netWithCharge);
 
         document.getElementById("cartDrawerBody").innerHTML = cartCount > 0 ? cartItemsHtml : '<div class="text-center py-5 opacity-50">Your selection is empty</div>';
+
+        return netWithCharge;
     }
 
     function updateMinOrderWidget(netTotal) {
@@ -2612,6 +2693,38 @@ thead th,
         }
     }
 
+    function showMinimumOrderToast(currentTotal) {
+        const currencyFormatter = new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 2
+        });
+        const remainingAmount = Math.max(MIN_ORDER - currentTotal, 0);
+        const minimumOrderText = currencyFormatter.format(MIN_ORDER);
+        const remainingText = currencyFormatter.format(remainingAmount);
+        const message = `Minimum order value is ${minimumOrderText}. Please add ${remainingText} more.`;
+
+        if (window.Swal) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'warning',
+                title: `Minimum order: ${minimumOrderText}`,
+                text: `Add ${remainingText} more to continue.`,
+                showConfirmButton: false,
+                showCloseButton: true,
+                timer: 5000,
+                timerProgressBar: true,
+                customClass: {
+                    container: 'minimum-order-toast-container',
+                    popup: 'minimum-order-toast'
+                }
+            });
+        } else {
+            window.alert(message);
+        }
+    }
+
     function openCart() {
         const hasSelectedProducts = Array.from(document.querySelectorAll(".qty"))
             .some(input => (parseInt(input.value, 10) || 0) > 0);
@@ -2630,7 +2743,12 @@ thead th,
             return;
         }
 
-        calculate();
+        const cartTotal = calculate();
+        if (MIN_ORDER > 0 && cartTotal < MIN_ORDER) {
+            showMinimumOrderToast(cartTotal);
+            return;
+        }
+
         document.getElementById("cartDrawer").classList.add("active");
         document.getElementById("cartOverlay").style.display = "block";
     }
@@ -2743,11 +2861,10 @@ thead th,
 
         const cartData = getSelectedCartItems();
 
-        let additionalCharge = extraCharge1 + extraCharge2;
-
         const totalGst = cartData.reduce((sum, item) => sum + item.item_gst, 0);
         const actualTotal = cartData.reduce((sum, item) => sum + item.mrp_total, 0);
         const subTotalValue = cartData.reduce((sum, item) => sum + item.total, 0);
+        const additionalCharge = Math.round(((subTotalValue * additionalChargePercentage) / 100 + Number.EPSILON) * 100) / 100;
         const netValue = subTotalValue + additionalCharge + totalGst;
         
         errorDiv.style.display = "none";
@@ -2765,7 +2882,10 @@ thead th,
                 otp: otp,
                 cart_data: JSON.stringify(cartData),
                 sub_total: actualTotal,
-                total: netValue
+                total: netValue,
+                additional_charge_name: additionalChargeName,
+                additional_charge_percentage: additionalChargePercentage,
+                additional_charge_amount: additionalCharge
             })
         })
         .then(response => response.json())

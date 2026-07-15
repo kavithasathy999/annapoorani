@@ -721,54 +721,50 @@ const homepageFromDashboard = (payload) => ({
 // SETTINGS (key-value store)
 // ==========================================
 
-const ADDITIONAL_CHARGE_CONFIG = [
-  {
-    label: 'Packing Charge',
-    nameKey: 'extra_charge_1_name',
-    amountKey: 'extra_charge_1_amount',
-  },
-  {
-    label: 'Shipping Charge',
-    nameKey: 'extra_charge_2_name',
-    amountKey: 'extra_charge_2_amount',
-  },
-];
-
 class AdditionalChargeValidationError extends Error {}
 
 const normalizeAdditionalChargeSettings = (settings) => {
   const normalizedSettings = { ...settings };
 
-  for (const charge of ADDITIONAL_CHARGE_CONFIG) {
-    const hasName = Object.prototype.hasOwnProperty.call(settings, charge.nameKey);
-    const hasAmount = Object.prototype.hasOwnProperty.call(settings, charge.amountKey);
+  const nameKey = 'additional_charge_name';
+  const percentageKey = 'additional_charge_percentage';
+  const hasName = Object.prototype.hasOwnProperty.call(settings, nameKey);
+  const hasPercentage = Object.prototype.hasOwnProperty.call(settings, percentageKey);
 
-    if (!hasName && !hasAmount) {
-      continue;
-    }
-
-    if (!hasName || !hasAmount) {
-      throw new AdditionalChargeValidationError(`${charge.label} name and amount are required together.`);
-    }
-
-    const rawAmount = settings[charge.amountKey];
-    if (typeof rawAmount === 'boolean' || rawAmount == null || typeof rawAmount === 'object') {
-      throw new AdditionalChargeValidationError(`${charge.label} amount must be a valid number.`);
-    }
-
-    const amountText = String(rawAmount).trim();
-    if (!/^\d+(?:\.\d{1,2})?$/.test(amountText)) {
-      throw new AdditionalChargeValidationError(`${charge.label} amount must be zero or more with up to 2 decimal places.`);
-    }
-
-    const amount = Number(amountText);
-    if (!Number.isFinite(amount) || amount > 999999.99) {
-      throw new AdditionalChargeValidationError(`${charge.label} amount must be between 0 and 999999.99.`);
-    }
-
-    normalizedSettings[charge.nameKey] = charge.label;
-    normalizedSettings[charge.amountKey] = amount.toFixed(2);
+  if (!hasName && !hasPercentage) {
+    return normalizedSettings;
   }
+
+  if (!hasName || !hasPercentage) {
+    throw new AdditionalChargeValidationError('Charge name and discount percentage are required together.');
+  }
+
+  if (typeof settings[nameKey] !== 'string') {
+    throw new AdditionalChargeValidationError('Charge name must be valid text.');
+  }
+
+  const name = settings[nameKey].trim();
+  if (!name || name.length > 100) {
+    throw new AdditionalChargeValidationError('Charge name is required and must not exceed 100 characters.');
+  }
+
+  const rawPercentage = settings[percentageKey];
+  if (typeof rawPercentage === 'boolean' || rawPercentage == null || typeof rawPercentage === 'object') {
+    throw new AdditionalChargeValidationError('Discount percentage must be a valid number.');
+  }
+
+  const percentageText = String(rawPercentage).trim();
+  if (!/^\d+(?:\.\d{1,2})?$/.test(percentageText)) {
+    throw new AdditionalChargeValidationError('Discount percentage must have a maximum of 2 decimal places.');
+  }
+
+  const percentage = Number(percentageText);
+  if (!Number.isFinite(percentage) || percentage <= 0 || percentage > 100) {
+    throw new AdditionalChargeValidationError('Discount percentage must be greater than 0 and no more than 100.');
+  }
+
+  normalizedSettings[nameKey] = name;
+  normalizedSettings[percentageKey] = percentage.toFixed(2);
 
   return normalizedSettings;
 };

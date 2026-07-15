@@ -52,6 +52,7 @@
         .items-table {
             width: 100%;
             border-collapse: collapse;
+            border: 1px solid #000;
             margin-top: 20px;
         }
         .items-table th {
@@ -60,6 +61,7 @@
             padding: 10px;
             font-size: 14px;
             text-align: center;
+            border: 1px solid #000;
         }
         .items-table th.left-align {
             text-align: left;
@@ -68,7 +70,7 @@
             padding: 10px;
             font-size: 14px;
             text-align: right;
-            border-bottom: 1px solid #eee;
+            border: 1px solid #000;
         }
         .items-table td.left-align {
             text-align: left;
@@ -167,7 +169,7 @@ function numberToWords($number) {
             <div class="company-name">SRI ANNAPOORANI CRACKERS</div>
             <div class="company-details">
                 1/205-13, Sattur to Virudhunagar Main Road, R R<br>
-                Nagar, Virudhunagar district.<br>
+                Nagar, Virudhunagar district-626204.<br>
                 Phone no: 9360353597<br>
                 Email: sriannapooranicrackers@gmail.com
             </div>
@@ -251,16 +253,10 @@ function numberToWords($number) {
                     <td>Sub Total</td>
                     <td>Rs {{ number_format($cartSubtotal, 2) }}</td>
                 </tr>
-                @if(isset($globalCharges) && !empty($globalCharges['extra_charge_1_name']) && floatval($globalCharges['extra_charge_1_amount'] ?? 0) > 0)
+                @if(isset($globalCharges) && !empty($globalCharges['additional_charge_name']) && floatval($globalCharges['additional_charge_amount'] ?? 0) > 0)
                 <tr>
-                    <td>{{ $globalCharges['extra_charge_1_name'] }}</td>
-                    <td>Rs {{ number_format(floatval($globalCharges['extra_charge_1_amount']), 2) }}</td>
-                </tr>
-                @endif
-                @if(isset($globalCharges) && !empty($globalCharges['extra_charge_2_name']) && floatval($globalCharges['extra_charge_2_amount'] ?? 0) > 0)
-                <tr>
-                    <td>{{ $globalCharges['extra_charge_2_name'] }}</td>
-                    <td>Rs {{ number_format(floatval($globalCharges['extra_charge_2_amount']), 2) }}</td>
+                    <td>{{ $globalCharges['additional_charge_name'] }}</td>
+                    <td>Rs {{ number_format(floatval($globalCharges['additional_charge_amount']), 2) }}</td>
                 </tr>
                 @endif
 

@@ -52,16 +52,12 @@ class EstimateController extends Controller
             return Area::orderBy('area_name')->get(['id', 'city_id', 'area_name', 'pincode']);
         });
         
-        $globalCharges = Cache::remember('estimate.global_charges', 300, function () {
-            return DB::table('settings')
-                ->whereIn('setting_key', [
-                    'extra_charge_1_name', 'extra_charge_1_amount',
-                    'extra_charge_2_name', 'extra_charge_2_amount',
-                    'extra_discount_1_name', 'extra_discount_1_amount',
-                    'extra_discount_2_name', 'extra_discount_2_amount'
-                ])
-                ->pluck('setting_value', 'setting_key');
-        });
+        $globalCharges = DB::table('settings')
+            ->whereIn('setting_key', [
+                'additional_charge_name',
+                'additional_charge_percentage',
+            ])
+            ->pluck('setting_value', 'setting_key');
 
         $priceList = Cache::remember('estimate.price_list', 300, fn () => PriceList::first());
         $settings = Cache::remember('home.settings', 300, fn () => HomeSetting::first() ?? new HomeSetting());

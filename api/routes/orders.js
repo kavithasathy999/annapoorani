@@ -56,19 +56,19 @@ const validateOrderItems = (items) => {
   return { parsedItems, subTotal };
 };
 
-const validateAmounts = (shipping, discount) => {
-  const normalizedShipping = Number(shipping || 0);
+const validateAmounts = (packing, discount) => {
+  const normalizedPacking = Number(packing || 0);
   const normalizedDiscount = Number(discount || 0);
 
-  if (!Number.isFinite(normalizedShipping) || normalizedShipping < 0) {
-    throw createValidationError('Shipping amount must be a valid non-negative number.');
+  if (!Number.isFinite(normalizedPacking) || normalizedPacking < 0) {
+    throw createValidationError('Packing amount must be a valid non-negative number.');
   }
 
   if (!Number.isFinite(normalizedDiscount) || normalizedDiscount < 0) {
     throw createValidationError('Discount amount must be a valid non-negative number.');
   }
 
-  return { normalizedShipping, normalizedDiscount };
+  return { normalizedPacking, normalizedDiscount };
 };
 
 const validatePaymentStatus = (paymentStatus) => {
@@ -406,7 +406,7 @@ router.get('/:id', async (req, res) => {
       [req.params.id]
     );
 
-    res.json({ success: true, data: { ...orders[0], items } });
+    res.json({ success: true, data: { ...orders[0], packing: orders[0].shipping, items } });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -416,7 +416,8 @@ router.get('/:id', async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    const { customer_id, items, order_type, shipping = 0, discount = 0, notes, payment_status, status, apply_gst, total_gst } = req.body;
+    const { customer_id, items, order_type, discount = 0, notes, payment_status, status, apply_gst, total_gst } = req.body;
+    const packing = req.body.packing ?? req.body.shipping ?? 0;
     const normalizedOrderType = normalizeOrderType(order_type);
     const normalizedCustomerId = Number(customer_id);
     const normalizedPaymentStatus = validatePaymentStatus(payment_status);
@@ -433,8 +434,8 @@ router.post('/', auth, async (req, res) => {
     }
 
     const { parsedItems, subTotal } = validateOrderItems(items);
-    const { normalizedShipping, normalizedDiscount } = validateAmounts(shipping, discount);
-    const total = subTotal + normalizedTotalGst + normalizedShipping - normalizedDiscount;
+    const { normalizedPacking, normalizedDiscount } = validateAmounts(packing, discount);
+    const total = subTotal + normalizedTotalGst + normalizedPacking - normalizedDiscount;
 
     if (total < 0) {
       throw createValidationError('Total amount cannot be negative.');
@@ -471,7 +472,7 @@ router.post('/', auth, async (req, res) => {
         orderNo,
         normalizedCustomerId,
         subTotal,
-        normalizedShipping,
+        normalizedPacking,
         normalizedDiscount,
         total,
         normalizedOrderType,
@@ -499,7 +500,8 @@ router.post('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    const { customer_id, items, shipping = 0, discount = 0, notes, status, payment_status, apply_gst, total_gst } = req.body;
+    const { customer_id, items, discount = 0, notes, status, payment_status, apply_gst, total_gst } = req.body;
+    const packing = req.body.packing ?? req.body.shipping ?? 0;
     const normalizedCustomerId = Number(customer_id);
     const normalizedPaymentStatus = validatePaymentStatus(payment_status);
     const normalizedStatus = validateOrderStatus(status || 'Pending');
@@ -511,8 +513,8 @@ router.put('/:id', auth, async (req, res) => {
     }
 
     const { parsedItems, subTotal } = validateOrderItems(items);
-    const { normalizedShipping, normalizedDiscount } = validateAmounts(shipping, discount);
-    const total = subTotal + normalizedTotalGst + normalizedShipping - normalizedDiscount;
+    const { normalizedPacking, normalizedDiscount } = validateAmounts(packing, discount);
+    const total = subTotal + normalizedTotalGst + normalizedPacking - normalizedDiscount;
 
     if (total < 0) {
       throw createValidationError('Total amount cannot be negative.');
@@ -528,7 +530,7 @@ router.put('/:id', auth, async (req, res) => {
       [
         normalizedCustomerId,
         subTotal,
-        normalizedShipping,
+        normalizedPacking,
         normalizedDiscount,
         total,
         normalizedStatus,

@@ -126,7 +126,7 @@
                     @if($global && $global->address)
                         <div>{{ $global->address }}</div>
                     @else
-                        <div>1/205-13, Sattur to Virudhunagar Main Road, R R Nagar, Virudhunagar district.</div>
+                        <div>1/205-13, Sattur to Virudhunagar Main Road, R R Nagar, Virudhunagar district-626204.</div>
                     @endif
                     @if($global && $global->phone)
                         <div>Phone no: {{ $global->phone }}</div>

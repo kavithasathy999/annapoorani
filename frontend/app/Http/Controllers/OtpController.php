@@ -65,8 +65,9 @@ class OtpController extends Controller
             'cart_data' => 'required|json',
             'sub_total' => 'required|numeric',
             'total' => 'required|numeric',
-            'additional_charge_type' => 'nullable|string',
-            'additional_charge_amount' => 'nullable|numeric',
+            'additional_charge_name' => 'nullable|string|max:100',
+            'additional_charge_percentage' => 'nullable|numeric|min:0|max:100',
+            'additional_charge_amount' => 'nullable|numeric|min:0',
         ]);
 
         $sessionData = session()->get('checkout_otp_data');
@@ -125,23 +126,36 @@ class OtpController extends Controller
                 ]);
             }
 
+            $cartData = json_decode($request->cart_data, true);
+            $chargeSettings = DB::table('settings')
+                ->whereIn('setting_key', ['additional_charge_name', 'additional_charge_percentage'])
+                ->pluck('setting_value', 'setting_key');
+
+            $chargeName = trim((string) ($chargeSettings['additional_charge_name'] ?? ''));
+            $chargePercentage = min(max((float) ($chargeSettings['additional_charge_percentage'] ?? 0), 0), 100);
+            $productSubtotal = collect($cartData)->sum(fn ($item) => (float) ($item['total'] ?? 0));
+            $totalGst = collect($cartData)->sum(fn ($item) => (float) ($item['item_gst'] ?? 0));
+            $additionalChargeAmount = $chargeName !== '' && $chargePercentage > 0
+                ? round(($productSubtotal * $chargePercentage) / 100, 2)
+                : 0;
+            $calculatedTotal = round($productSubtotal + $totalGst + $additionalChargeAmount, 2);
+
             // Create Order
             $order = Order::create([
                 'order_no' => $orderId,
                 'customer_id' => $customer->id,
                 'sub_total' => $request->sub_total,
-                'shipping' => $request->additional_charge_amount ?: 0,
+                'shipping' => $additionalChargeAmount,
                 'discount' => 0,
-                'total' => $request->total,
-                'additional_charge_type' => $request->additional_charge_type,
-                'additional_charge_amount' => $request->additional_charge_amount ?: 0,
+                'total' => $calculatedTotal,
+                'additional_charge_type' => $chargeName ?: null,
+                'additional_charge_amount' => $additionalChargeAmount,
                 'order_type' => 'ONLINE',
                 'status' => 'Pending',
                 'order_date' => now()->format('Y-m-d')
             ]);
 
             // Create Order Slots
-            $cartData = json_decode($request->cart_data, true);
             foreach ($cartData as $item) {
                 OrderSlot::create([
                     'order_id' => $order->id,
