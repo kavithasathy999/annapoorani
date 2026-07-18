@@ -49,6 +49,26 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 2,
   }).format(Number(value || 0));
 
+const getEffectiveGstRate = (item, globalGst) => {
+  const itemRate = Number(item.product_gst_rate);
+
+  return Number.isFinite(itemRate) && itemRate > 0
+    ? itemRate
+    : Number(globalGst || 0);
+};
+
+const calculateItemGst = (item, applyOverallGst, globalGst) => {
+  if (!applyOverallGst || !item.is_gst_applied) {
+    return 0;
+  }
+
+  const quantity = Number(item.quantity || 0);
+  const price = Number(item.price || 0);
+  const gstRate = getEffectiveGstRate(item, globalGst);
+
+  return (quantity * price * gstRate) / 100;
+};
+
 const BillingInvoiceFormPage = () => {
   const navigate = useNavigate();
   const { invoiceId } = useParams();
@@ -212,14 +232,7 @@ const BillingInvoiceFormPage = () => {
         }
 
         if (['product_id', 'quantity', 'price', 'is_gst_applied'].includes(field)) {
-          const qty = Number(nextItem.quantity || 0);
-          const price = Number(nextItem.price || 0);
-          const total = qty * price;
-          if (nextItem.is_gst_applied && nextItem.product_gst_rate > 0) {
-            nextItem.item_gst = (total * nextItem.product_gst_rate) / 100;
-          } else {
-            nextItem.item_gst = 0;
-          }
+          nextItem.item_gst = calculateItemGst(nextItem, current.apply_gst, globalGst);
         }
 
         return nextItem;
@@ -245,10 +258,7 @@ const BillingInvoiceFormPage = () => {
 
   const invoiceTotals = useMemo(() => {
     let subTotal = 0;
-    let subTotalForOverallGst = 0;
-    const individualGsts = [];
     let totalGst = 0;
-    let overallGstAmount = 0;
 
     invoiceForm.items.forEach((item) => {
       const qty = Number(item.quantity || 0);
@@ -256,21 +266,8 @@ const BillingInvoiceFormPage = () => {
       const total = qty * price;
       subTotal += total;
 
-      if (item.is_gst_applied && item.product_gst_rate > 0) {
-        const itemGst = (total * item.product_gst_rate) / 100;
-        const product = products.find(p => String(p.id) === String(item.product_id));
-        const pName = product ? product.name : `Product #${item.product_id}`;
-        individualGsts.push({ label: `${pName} GST (${item.product_gst_rate}%)`, amount: itemGst });
-        totalGst += itemGst;
-      } else {
-        subTotalForOverallGst += total;
-      }
+      totalGst += calculateItemGst(item, invoiceForm.apply_gst, globalGst);
     });
-
-    if (invoiceForm.apply_gst && globalGst > 0) {
-       overallGstAmount = (subTotalForOverallGst * globalGst) / 100;
-       totalGst += overallGstAmount;
-    }
 
     const packingPercentage = Number(invoiceForm.packing || 0);
     const packing = (subTotal * packingPercentage) / 100;
@@ -284,12 +281,9 @@ const BillingInvoiceFormPage = () => {
       discount,
       discountPercentage,
       totalGst,
-      overallGstAmount,
-      overallGstRate: globalGst,
-      individualGsts,
-      grandTotal: subTotal + totalGst + packing - discount,
+      grandTotal: subTotal - discount + totalGst + packing,
     };
-  }, [invoiceForm, products, globalGst]);
+  }, [invoiceForm, globalGst]);
 
   const handleSubmitInvoice = async () => {
     if (!invoiceForm.customer_id) {
@@ -308,14 +302,18 @@ const BillingInvoiceFormPage = () => {
       return;
     }
 
-    const itemsPayload = invoiceForm.items.map((item) => ({
-      product_id: Number(item.product_id),
-      quantity: Number(item.quantity),
-      price: Number(item.price),
-      is_gst_applied: Boolean(item.is_gst_applied),
-      item_gst: Number(item.item_gst),
-      product_gst_rate: Number(item.product_gst_rate),
-    }));
+    const itemsPayload = invoiceForm.items.map((item) => {
+      const isGstApplied = Boolean(invoiceForm.apply_gst && item.is_gst_applied);
+
+      return {
+        product_id: Number(item.product_id),
+        quantity: Number(item.quantity),
+        price: Number(item.price),
+        is_gst_applied: isGstApplied,
+        item_gst: calculateItemGst(item, invoiceForm.apply_gst, globalGst),
+        product_gst_rate: getEffectiveGstRate(item, globalGst),
+      };
+    });
 
     if (itemsPayload.some((item) => !item.product_id || item.quantity <= 0 || item.price < 0)) {
       addToast('Each line item needs a product, positive quantity, and valid price.', 'error');
@@ -536,12 +534,7 @@ const BillingInvoiceFormPage = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Line Items</h3>
-              <Button variant="secondary" onClick={addInvoiceItem} icon={Plus}>
-                Add Item
-              </Button>
-            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Line Items</h3>
 
             <div className="space-y-4">
               {invoiceForm.items.map((item, index) => (
@@ -619,31 +612,21 @@ const BillingInvoiceFormPage = () => {
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/[0.02]">
               <h4 className="text-base font-semibold text-slate-800 dark:text-white">Totals</h4>
               <div className="mt-4 space-y-3 text-sm">
-                {invoiceTotals.individualGsts.map((gst, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                    <span>{gst.label}</span>
-                    <strong>{formatCurrency(gst.amount)}</strong>
-                  </div>
-                ))}
-
-                {invoiceForm.apply_gst && invoiceTotals.overallGstAmount > 0 && (
-                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                    <span>Overall GST ({invoiceTotals.overallGstRate}%)</span>
-                    <strong>{formatCurrency(invoiceTotals.overallGstAmount)}</strong>
-                  </div>
-                )}
-
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
                   <span>Sub Total</span>
                   <strong>{formatCurrency(invoiceTotals.subTotal)}</strong>
                 </div>
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                  <span>Packing</span>
-                  <strong>{formatCurrency(invoiceTotals.packing)}</strong>
-                </div>
-                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
                   <span>Discount</span>
                   <strong>{formatCurrency(invoiceTotals.discount)}</strong>
+                </div>
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                  <span>GST</span>
+                  <strong>{formatCurrency(invoiceTotals.totalGst)}</strong>
+                </div>
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                  <span>Packing</span>
+                  <strong>{formatCurrency(invoiceTotals.packing)}</strong>
                 </div>
                 <div className="flex items-center justify-between border-t border-slate-200 pt-3 text-base font-bold text-slate-900 dark:border-white/10 dark:text-white">
                   <span>Grand Total</span>
@@ -654,6 +637,9 @@ const BillingInvoiceFormPage = () => {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
+            <Button variant="secondary" onClick={addInvoiceItem} icon={Plus}>
+              Add Item
+            </Button>
             <Button variant="secondary" onClick={() => navigate('/orders/billing')} disabled={isSubmitting}>
               Cancel
             </Button>

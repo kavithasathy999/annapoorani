@@ -1,9 +1,30 @@
 const express = require('express');
+const fs = require('fs');
 const pool = require('../config/db');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 const router = express.Router();
+
+const removeUploadedFiles = async (files = {}) => {
+  const uploadedFiles = Object.values(files).flat();
+
+  await Promise.all(
+    uploadedFiles.map(async (file) => {
+      if (!file?.path) {
+        return;
+      }
+
+      try {
+        await fs.promises.unlink(file.path);
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          console.error(`Unable to remove failed upload ${file.path}:`, error.message);
+        }
+      }
+    })
+  );
+};
 
 const storeConfigUpload = (req, res, next) => {
   const contentType = req.headers['content-type'] || '';
@@ -84,6 +105,24 @@ const seoDetailsUpload = (req, res, next) => {
   return upload.handleErrors('image')(req, res, next);
 };
 
+const validateGlobalSettingsImageDimensions = upload.validateImageDimensions({
+  main_logo: { width: 140, height: 69, label: 'Main Logo' },
+  favicon: { width: 40, height: 40, label: 'Favicon' },
+});
+
+const validateHomepageImageDimensions = upload.validateImageDimensions({
+  hero_section_image: { width: 1920, height: 686, label: 'Section Image' },
+});
+
+const validateAboutImageDimensions = upload.validateImageDimensions({
+  story_banner_image: { width: 1224, height: 864, label: 'Top Banner Image' },
+  story_main_image: { width: 1224, height: 816, label: 'Main Content Image' },
+});
+
+const validateSeoImageDimensions = upload.validateImageDimensions({
+  image: { width: 1200, height: 630, label: 'SEO Image' },
+});
+
 const blogImageUpload = (req, res, next) => {
   const contentType = req.headers['content-type'] || '';
   if (!contentType.includes('multipart/form-data')) {
@@ -149,13 +188,6 @@ const GLOBAL_SETTINGS_FIELDS = [
 ];
 
 const GLOBAL_SETTINGS_KEYS = new Set(GLOBAL_SETTINGS_FIELDS.map((field) => field.key));
-
-const THEME_SETTINGS_FIELDS = [
-  { key: 'color_primary', group: 'theme', defaultValue: '#f8fafc' },
-  { key: 'color_secondary', group: 'theme', defaultValue: '#ffffff' },
-  { key: 'color_tertiary', group: 'theme', defaultValue: '#f59e0b' },
-  { key: 'color_quaternary', group: 'theme', defaultValue: '#ec4899' },
-];
 
 const TERMS_SETTINGS_FIELD = { key: 'terms_conditions_html', group: 'legal', defaultValue: '' };
 const LEGACY_TERMS_SETTINGS_KEY = 'terms_content';
@@ -237,6 +269,7 @@ const HOMEPAGE_SETTINGS_FIELDS = [
   { key: 'hero_badge_1_text', group: 'homepage', defaultValue: 'Trustable Crackers Shop In Sivakasi' },
   { key: 'hero_badge_2_text', group: 'homepage', defaultValue: '80% Off Sale' },
   { key: 'hero_badge_3_text', group: 'homepage', defaultValue: 'Free Shipping ₹3000+' },
+  { key: 'hero_badge_4_text', group: 'homepage', defaultValue: '5000+ Happy Customers' },
   { key: 'hero_section_image', group: 'homepage', defaultValue: '' },
   { key: 'welcome_badge_count', group: 'homepage', defaultValue: '25' },
   { key: 'welcome_badge_label', group: 'homepage', defaultValue: 'Years' },
@@ -295,7 +328,6 @@ const PAYMENT_SETTINGS_FIELDS = [
   { key: 'payment_page_heading_html', group: 'payment', defaultValue: '<p>Please select an option to pay</p>' },
 ];
 
-const THEME_SETTINGS_KEYS = new Set(THEME_SETTINGS_FIELDS.map((field) => field.key));
 const ABOUT_SETTINGS_KEYS = new Set(ABOUT_SETTINGS_FIELDS.map((field) => field.key));
 const HOMEPAGE_SETTINGS_KEYS = new Set(HOMEPAGE_SETTINGS_FIELDS.map((field) => field.key));
 const PAYMENT_SETTINGS_KEYS = new Set(PAYMENT_SETTINGS_FIELDS.map((field) => field.key));
@@ -303,16 +335,8 @@ const CONTACT_PAGE_KEYS = new Set([
   ...CONTACT_PAGE_SHARED_FIELDS.map((field) => field.key),
   ...CONTACT_PAGE_SETTINGS_FIELDS.map((field) => field.key),
 ]);
-const FULL_HEX_COLOR_REGEX = /^#[0-9a-f]{6}$/i;
-
 const getGlobalSettingsPayload = (settingsMap = {}) =>
   GLOBAL_SETTINGS_FIELDS.reduce((accumulator, field) => {
-    accumulator[field.key] = settingsMap[field.key] ?? field.defaultValue;
-    return accumulator;
-  }, {});
-
-const getThemeSettingsPayload = (settingsMap = {}) =>
-  THEME_SETTINGS_FIELDS.reduce((accumulator, field) => {
     accumulator[field.key] = settingsMap[field.key] ?? field.defaultValue;
     return accumulator;
   }, {});
@@ -553,31 +577,6 @@ const getNormalizedPaymentPayload = (payload = {}) => {
   }, {});
 };
 
-const getNormalizedThemePayload = (payload = {}) => {
-  const normalizedPayload = {};
-
-  for (const key of Object.keys(payload)) {
-    if (!THEME_SETTINGS_KEYS.has(key)) {
-      throw new Error(`Unknown theme setting key: ${key}`);
-    }
-  }
-
-  for (const field of THEME_SETTINGS_FIELDS) {
-    if (!(field.key in payload)) {
-      throw new Error(`Missing theme setting key: ${field.key}`);
-    }
-
-    const value = String(payload[field.key] ?? '').trim().toLowerCase();
-    if (!FULL_HEX_COLOR_REGEX.test(value)) {
-      throw new Error(`Invalid color value for ${field.key}. Use #RRGGBB format.`);
-    }
-
-    normalizedPayload[field.key] = value;
-  }
-
-  return normalizedPayload;
-};
-
 const upsertSetting = async (key, value, group) => {
   await pool.query(
     `INSERT INTO settings (setting_key, setting_value, setting_group)
@@ -645,6 +644,7 @@ const homepageToDashboard = (row = {}) => {
     hero_badge_1_text: row.badge1_text || '',
     hero_badge_2_text: row.badge2_text || '',
     hero_badge_3_text: row.badge3_text || '',
+    hero_badge_4_text: row.badge4_text || '',
     hero_section_image: row.welcome_image || '',
     welcome_badge_count: row.welcome_badge_count || '25',
     welcome_badge_label: row.welcome_badge_label || 'Years',
@@ -690,6 +690,7 @@ const homepageFromDashboard = (payload) => ({
   badge1_text: payload.hero_badge_1_text,
   badge2_text: payload.hero_badge_2_text,
   badge3_text: payload.hero_badge_3_text,
+  badge4_text: payload.hero_badge_4_text,
   welcome_image: payload.hero_section_image,
   welcome_badge_count: payload.welcome_badge_count,
   welcome_badge_label: payload.welcome_badge_label,
@@ -812,63 +813,6 @@ router.put('/', auth, async (req, res) => {
   }
 });
 
-router.get('/theme', async (req, res, next) => {
-  if (req.path === '/theme' && req.baseUrl === '/api/settings') {
-    return auth(req, res, next);
-  }
-
-  return next();
-}, async (req, res) => {
-  try {
-    const row = await getSingleRow('theme_settings');
-    res.json({
-      success: true,
-      data: {
-        color_primary: row.primary_color || '#f8fafc',
-        color_secondary: row.secondary_color || '#ffffff',
-        color_tertiary: row.tertiary_color || '#f59e0b',
-        color_quaternary: row.quaternary_color || '#ec4899',
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-router.put('/theme', (req, res, next) => {
-  if (req.baseUrl !== '/api/settings') {
-    return res.status(404).json({ success: false, message: 'Route not found.' });
-  }
-
-  return auth(req, res, next);
-}, async (req, res) => {
-  try {
-    const normalizedPayload = getNormalizedThemePayload(req.body || {});
-    await updateSingleRow('theme_settings', {
-      primary_color: normalizedPayload.color_primary,
-      secondary_color: normalizedPayload.color_secondary,
-      tertiary_color: normalizedPayload.color_tertiary,
-      quaternary_color: normalizedPayload.color_quaternary,
-    });
-
-    res.json({
-      success: true,
-      message: 'Theme settings saved successfully.',
-      data: normalizedPayload,
-    });
-  } catch (error) {
-    const isValidationError =
-      error.message.startsWith('Unknown theme setting key:') ||
-      error.message.startsWith('Missing theme setting key:') ||
-      error.message.startsWith('Invalid color value for');
-
-    res.status(isValidationError ? 400 : 500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
 // ==========================================
 // STORE CONFIG (on/off, min order, discount)
 // ==========================================
@@ -878,14 +822,18 @@ router.get('/store', async (req, res) => {
   try {
     const [discountRows] = await pool.query('SELECT discount FROM discounts ORDER BY id DESC LIMIT 1');
     const [pageOffRows] = await pool.query('SELECT status, image FROM page_off ORDER BY id ASC LIMIT 1');
+    const [storeConfigRows] = await pool.query('SELECT is_store_open FROM store_config ORDER BY id ASC LIMIT 1');
     const homeSettingsRows = await getSingleRow('home_settings');
     res.json({
       success: true,
       data: {
-        is_store_open: Number(pageOffRows[0]?.status ?? 1),
+        is_store_open: Number(pageOffRows[0]?.status ?? storeConfigRows[0]?.is_store_open ?? 1),
         min_order_value: Number(homeSettingsRows?.min_order_value ?? 0),
         global_discount: Number(discountRows[0]?.discount || 0),
         global_gst: Number(homeSettingsRows?.global_gst ?? 0),
+        gst_type: ['inclusive', 'exclusive'].includes(homeSettingsRows?.gst_type)
+          ? homeSettingsRows.gst_type
+          : 'exclusive',
         off_banner_image: pageOffRows[0]?.image || '',
       },
     });
@@ -897,11 +845,14 @@ router.get('/store', async (req, res) => {
 // PUT /api/settings/store
 router.put('/store', auth, storeConfigUpload, async (req, res) => {
   try {
-    const { is_store_open, min_order_value, global_discount, global_gst, apply_discount } = req.body;
+    const { is_store_open, min_order_value, global_discount, global_gst, gst_type, apply_discount } = req.body;
+    const currentHomeSettings = await getSingleRow('home_settings');
+    const [discountRows] = await pool.query('SELECT id, discount FROM discounts ORDER BY id DESC LIMIT 1');
     const normalizedStoreOpen = Number(is_store_open ?? 1);
-    const normalizedMinOrderValue = Number(min_order_value ?? 0);
-    const normalizedGlobalDiscount = Number(global_discount ?? 0);
-    const normalizedGlobalGst = Number(global_gst ?? 0);
+    const normalizedMinOrderValue = Number(min_order_value ?? currentHomeSettings.min_order_value ?? 0);
+    const normalizedGlobalDiscount = Number(global_discount ?? discountRows[0]?.discount ?? 0);
+    const normalizedGlobalGst = Number(global_gst ?? currentHomeSettings.global_gst ?? 0);
+    const normalizedGstType = String(gst_type ?? currentHomeSettings.gst_type ?? 'exclusive').toLowerCase();
     const shouldApplyDiscount = apply_discount === true || apply_discount === 'true' || apply_discount === '1';
 
     if (![0, 1].includes(normalizedStoreOpen)) {
@@ -920,7 +871,10 @@ router.put('/store', auth, storeConfigUpload, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Global GST must be between 0 and 100.' });
     }
 
-    const [discountRows] = await pool.query('SELECT id FROM discounts ORDER BY id DESC LIMIT 1');
+    if (!['inclusive', 'exclusive'].includes(normalizedGstType)) {
+      return res.status(400).json({ success: false, message: 'GST type must be inclusive or exclusive.' });
+    }
+
     if (discountRows.length > 0) {
       await pool.query('UPDATE discounts SET discount = ?, updated_at = NOW() WHERE id = ?', [normalizedGlobalDiscount, discountRows[0].id]);
     } else {
@@ -947,7 +901,24 @@ router.put('/store', auth, storeConfigUpload, async (req, res) => {
       await pool.query('INSERT INTO page_off (status, image, created_at, updated_at) VALUES (?, ?, NOW(), NOW())', [normalizedStoreOpen, offBannerImage]);
     }
 
-    await updateSingleRow('home_settings', { min_order_value: normalizedMinOrderValue, global_gst: normalizedGlobalGst });
+    const [storeConfigRows] = await pool.query('SELECT id FROM store_config ORDER BY id ASC LIMIT 1');
+    if (storeConfigRows.length > 0) {
+      await pool.query(
+        'UPDATE store_config SET is_store_open = ?, min_order_value = ?, global_discount = ? WHERE id = ?',
+        [normalizedStoreOpen, normalizedMinOrderValue, normalizedGlobalDiscount, storeConfigRows[0].id]
+      );
+    } else {
+      await pool.query(
+        'INSERT INTO store_config (is_store_open, min_order_value, global_discount) VALUES (?, ?, ?)',
+        [normalizedStoreOpen, normalizedMinOrderValue, normalizedGlobalDiscount]
+      );
+    }
+
+    await updateSingleRow('home_settings', {
+      min_order_value: normalizedMinOrderValue,
+      global_gst: normalizedGlobalGst,
+      gst_type: normalizedGstType,
+    });
 
     res.json({
       success: true,
@@ -1011,7 +982,7 @@ router.get('/global', auth, async (req, res) => {
   }
 });
 
-router.put('/global', auth, globalSettingsUpload, async (req, res) => {
+router.put('/global', auth, globalSettingsUpload, validateGlobalSettingsImageDimensions, async (req, res) => {
   try {
     const files = req.files || {};
     const payload = {};
@@ -1169,26 +1140,21 @@ router.put('/welcome-badge', auth, async (req, res) => {
 // ==========================================
 router.get('/festival-offer', async (req, res) => {
   try {
-    const row = await getSingleRow('home_settings');
-    
-    // Format datetime-local string (YYYY-MM-DDTHH:mm)
-    let formattedDate = '';
-    if (row.offer_end_date) {
-      const d = new Date(row.offer_end_date);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
+    const [rows] = await pool.query(`
+      SELECT *,
+             DATE_FORMAT(offer_end_date, '%Y-%m-%dT%H:%i') AS offer_end_date_input
+      FROM home_settings
+      ORDER BY id ASC
+      LIMIT 1
+    `);
+    const row = rows[0] || {};
 
     res.json({
       success: true,
       data: {
         offer_heading: row.offer_heading || '',
         offer_subheading: row.offer_subheading || '',
-        offer_end_date: formattedDate,
+        offer_end_date: row.offer_end_date_input || '',
         offer_button_text: row.offer_button_text || '',
         offer_button_link: row.offer_button_link || '',
       },
@@ -1208,6 +1174,25 @@ router.put('/festival-offer', auth, async (req, res) => {
       offer_button_link,
     } = req.body;
 
+    const normalizedOfferEndDate = offer_end_date
+      ? String(offer_end_date).trim().replace('T', ' ')
+      : null;
+
+    if (
+      normalizedOfferEndDate &&
+      !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(?::\d{2})?$/.test(normalizedOfferEndDate)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Offer end date must be a valid date and time.',
+      });
+    }
+
+    const databaseOfferEndDate =
+      normalizedOfferEndDate && normalizedOfferEndDate.length === 16
+        ? `${normalizedOfferEndDate}:00`
+        : normalizedOfferEndDate;
+
     const connection = await pool.getConnection();
     try {
       const id = await getSingleRowId(connection, 'home_settings');
@@ -1223,7 +1208,7 @@ router.put('/festival-offer', auth, async (req, res) => {
         [
           offer_heading ?? '',
           offer_subheading ?? '',
-          offer_end_date ? new Date(offer_end_date) : null,
+          databaseOfferEndDate,
           offer_button_text ?? '',
           offer_button_link ?? '',
           id
@@ -1254,7 +1239,7 @@ router.get('/homepage', async (req, res) => {
   }
 });
 
-router.put('/homepage', auth, homepageSettingsUpload, async (req, res) => {
+router.put('/homepage', auth, homepageSettingsUpload, validateHomepageImageDimensions, async (req, res) => {
   try {
     const normalizedPayload = getNormalizedHomepagePayload(req.body || {});
     const existingSettings = await getSingleRow('home_settings');
@@ -1322,7 +1307,7 @@ router.get('/about', async (req, res) => {
   }
 });
 
-router.put('/about', auth, aboutSettingsUpload, async (req, res) => {
+router.put('/about', auth, aboutSettingsUpload, validateAboutImageDimensions, async (req, res) => {
   try {
     const files = req.files || {};
     const normalizedPayload = getNormalizedAboutPayload(req.body || {});
@@ -1344,9 +1329,7 @@ router.put('/about', auth, aboutSettingsUpload, async (req, res) => {
       eyebrow: normalizedPayload.story_eyebrow,
       hero_eyebrow: normalizedPayload.story_eyebrow,
       heading: normalizedPayload.story_heading_html,
-      hero_title: normalizedPayload.story_heading_html,
       description: normalizedPayload.story_description_html,
-      hero_subtitle: normalizedPayload.story_description_html,
       badge1_text: normalizedPayload.badge_1_text,
       badge2_text: normalizedPayload.badge_2_text,
       badge3_text: normalizedPayload.badge_3_text,
@@ -1374,6 +1357,8 @@ router.put('/about', auth, aboutSettingsUpload, async (req, res) => {
       data: normalizedPayload,
     });
   } catch (error) {
+    await removeUploadedFiles(req.files);
+
     const isValidationError =
       error.message === 'About settings payload must be an object.' ||
       error.message.startsWith('Unknown about setting key:') ||
@@ -1881,7 +1866,7 @@ router.get('/seo-details', async (req, res) => {
   }
 });
 
-router.post('/seo-details', auth, seoDetailsUpload, async (req, res) => {
+router.post('/seo-details', auth, seoDetailsUpload, validateSeoImageDimensions, async (req, res) => {
   try {
     const seoHeadingId = Number(req.body.seo_heading_id);
     const meta_title = req.body.meta_title?.trim();
@@ -1943,7 +1928,7 @@ router.post('/seo-details', auth, seoDetailsUpload, async (req, res) => {
   }
 });
 
-router.put('/seo-details/:id', auth, seoDetailsUpload, async (req, res) => {
+router.put('/seo-details/:id', auth, seoDetailsUpload, validateSeoImageDimensions, async (req, res) => {
   try {
     const seoHeadingId = Number(req.body.seo_heading_id);
     const meta_title = req.body.meta_title?.trim();

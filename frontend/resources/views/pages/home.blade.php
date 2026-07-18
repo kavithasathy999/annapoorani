@@ -2597,12 +2597,14 @@
         .brands-track {
             display: flex !important;
             width: max-content !important;
-            animation: marquee 35s linear infinite !important;
+            animation-name: brandMarqueeScroll !important;
+            animation-duration: var(--brand-marquee-duration, 35s) !important;
+            animation-timing-function: linear !important;
+            animation-iteration-count: infinite !important;
+            animation-direction: normal !important;
+            animation-fill-mode: none !important;
+            animation-play-state: running !important;
             will-change: transform;
-        }
-
-        .brands-track:hover {
-            animation-play-state: paused !important;
         }
 
         .brands-group {
@@ -2612,12 +2614,12 @@
             flex-shrink: 0 !important;
         }
 
-        @keyframes marquee {
+        @keyframes brandMarqueeScroll {
             0% {
                 transform: translate3d(0, 0, 0);
             }
             100% {
-                transform: translate3d(-50%, 0, 0);
+                transform: translate3d(var(--brand-marquee-distance, -50%), 0, 0);
             }
         }
 
@@ -3912,7 +3914,22 @@
 
     </section>
 
-@if($settings->offer_end_date && strtotime($settings->offer_end_date) > time())
+@php
+    $offerEndsAt = null;
+
+    if ($settings->offer_end_date) {
+        try {
+            $offerEndsAt = \Illuminate\Support\Carbon::parse(
+                $settings->offer_end_date,
+                config('app.timezone')
+            );
+        } catch (\Throwable $error) {
+            $offerEndsAt = null;
+        }
+    }
+@endphp
+
+@if($offerEndsAt?->isFuture())
 <div class="offer-strip" id="offer-strip">
     <div class="offer-strip-inner">
         <div class="offer-strip-text">
@@ -3989,16 +4006,16 @@
 
             <div class="about-facts">
                 @php
-                $dynamicBadges = [
-                ['text' => $settings->badge1_text ?? '5000+ Happy Customers', 'icon' => '🏆'],
-                ['text' => $settings->badge2_text ?? '200+ Products Available', 'icon' => '🔥'],
-                ['text' => $settings->badge3_text ?? '80% Maximum Discount', 'icon' => '🚀'],
-                ['text' => $settings->badge4_text ?? '25+ Years of Trust', 'icon' => '🎉'],
-                ];
+                $dynamicBadges = array_values(array_filter([
+                ['text' => trim((string) $settings->badge1_text), 'icon' => '🏆', 'is_min_order' => false],
+                ['text' => trim((string) $settings->badge2_text), 'icon' => '🔥', 'is_min_order' => false],
+                ['text' => trim((string) $settings->badge3_text), 'icon' => '🚀', 'is_min_order' => true],
+                ['text' => trim((string) $settings->badge4_text), 'icon' => '🎉', 'is_min_order' => false],
+                ], fn ($badge) => $badge['text'] !== ''));
                 @endphp
                 @foreach($dynamicBadges as $badge)
                 @php
-                $isMinOrderBadge = $loop->iteration === 3;
+                $isMinOrderBadge = $badge['is_min_order'];
 
                 if ($isMinOrderBadge && preg_match('/[0-9][0-9,]*(?:\.[0-9]+)?(?:[%+])?/', $badge['text'], $valueMatch)) {
                     // Show the extracted value above the complete Min Order text.
@@ -4657,7 +4674,10 @@ alt="Order Process">
     }
 
     function updateCountdown() {
-        const target = new Date("{{ $settings->offer_end_date ? date('Y-m-d H:i:s', strtotime($settings->offer_end_date)) : '2026-10-30 00:00:00' }}");
+        const offerEndDate = @json($offerEndsAt?->toIso8601String());
+        if (!offerEndDate) return;
+
+        const target = new Date(offerEndDate);
         const now = new Date();
         const diff = target - now;
         if (diff <= 0) return;
@@ -4706,8 +4726,49 @@ alt="Order Process">
     const brandWrap = document.querySelector('.brands-marquee-wrap');
     const brandTrack = document.getElementById('brandsTrack');
     if (brandWrap && brandTrack) {
+        const sourceGroup = brandTrack.querySelector('.brands-group');
         let bStartX = 0;
         let bEndX = 0;
+        let brandResizeTimer = null;
+
+        const initializeBrandMarquee = () => {
+            if (!sourceGroup || !sourceGroup.children.length) return;
+
+            Array.from(brandTrack.querySelectorAll('.brands-group')).forEach((group, index) => {
+                if (index > 0) group.remove();
+            });
+
+            const groupWidth = sourceGroup.getBoundingClientRect().width;
+            const wrapWidth = brandWrap.getBoundingClientRect().width;
+            if (!groupWidth || !wrapWidth) return;
+
+            const requiredTrackWidth = wrapWidth + groupWidth;
+            let renderedTrackWidth = groupWidth;
+
+            while (renderedTrackWidth < requiredTrackWidth) {
+                const clone = sourceGroup.cloneNode(true);
+                clone.setAttribute('aria-hidden', 'true');
+                brandTrack.appendChild(clone);
+                renderedTrackWidth += groupWidth;
+            }
+
+            const pixelsPerSecond = 45;
+            const duration = Math.max(groupWidth / pixelsPerSecond, 12);
+            brandTrack.style.setProperty('--brand-marquee-distance', `-${groupWidth}px`);
+            brandTrack.style.setProperty('--brand-marquee-duration', `${duration}s`);
+            brandTrack.style.setProperty('animation-direction', 'normal', 'important');
+
+            brandTrack.style.setProperty('animation-name', 'none', 'important');
+            void brandTrack.offsetWidth;
+            brandTrack.style.removeProperty('animation-name');
+        };
+
+        initializeBrandMarquee();
+        window.addEventListener('resize', () => {
+            clearTimeout(brandResizeTimer);
+            brandResizeTimer = setTimeout(initializeBrandMarquee, 180);
+        });
+
         brandWrap.addEventListener('touchstart', e => {
             bStartX = e.changedTouches[0].screenX;
         }, { passive: true });
@@ -4717,11 +4778,11 @@ alt="Order Process">
             if (window.innerWidth <= 1024) {
                 if (bEndX < bStartX - 30) {
                     // Swiped Left -> scroll left
-                    brandTrack.style.animationDirection = 'normal';
+                    brandTrack.style.setProperty('animation-direction', 'normal', 'important');
                 }
                 if (bEndX > bStartX + 30) {
                     // Swiped Right -> scroll right
-                    brandTrack.style.animationDirection = 'reverse';
+                    brandTrack.style.setProperty('animation-direction', 'reverse', 'important');
                 }
             }
         }, { passive: true });

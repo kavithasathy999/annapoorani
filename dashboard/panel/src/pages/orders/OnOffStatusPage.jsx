@@ -4,14 +4,11 @@ import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/FormFields';
 import { Badge } from '../../components/ui/Badge';
 import { apiRequest, getAssetUrl } from '../../lib/api';
 
 const initialConfig = {
   is_store_open: '1',
-  min_order_value: '2000',
-  global_discount: '0',
   off_banner_image: '',
 };
 
@@ -31,8 +28,6 @@ const OnOffStatusPage = () => {
 
       setStoreConfig({
         is_store_open: String(Number(config.is_store_open ?? 1)),
-        min_order_value: String(config.min_order_value ?? 2000),
-        global_discount: String(config.global_discount ?? 0),
         off_banner_image: config.off_banner_image || '',
       });
       setSelectedBanner(null);
@@ -63,14 +58,6 @@ const OnOffStatusPage = () => {
     }));
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setStoreConfig((current) => ({
-      ...current,
-      [name]: value,
-    }));
-  };
-
   const handleBannerChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -86,19 +73,10 @@ const OnOffStatusPage = () => {
   };
 
   const handleSave = async () => {
-    const minimumOrderValue = Number(storeConfig.min_order_value);
-
-    if (!Number.isFinite(minimumOrderValue) || minimumOrderValue < 0) {
-      addToast('Minimum order value must be a valid non-negative number.', 'error');
-      return;
-    }
-
     try {
       setIsSaving(true);
       const payload = new FormData();
       payload.append('is_store_open', storeConfig.is_store_open);
-      payload.append('min_order_value', String(minimumOrderValue));
-      payload.append('global_discount', String(Number(storeConfig.global_discount || 0)));
 
       if (selectedBanner) {
         payload.append('off_banner_image', selectedBanner);
@@ -186,30 +164,6 @@ const OnOffStatusPage = () => {
               </button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <Input
-                label="Minimum Order Value"
-                name="min_order_value"
-                type="number"
-                min="0"
-                step="0.01"
-                value={storeConfig.min_order_value}
-                onChange={handleInputChange}
-                placeholder="2000"
-              />
-              <Input
-                label="Global Discount"
-                name="global_discount"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={storeConfig.global_discount}
-                onChange={handleInputChange}
-                disabled
-              />
-            </div>
-
             <div className="space-y-4 rounded-2xl border border-slate-200 p-5 dark:border-white/10">
               <div>
                 <h4 className="font-semibold text-slate-800 dark:text-white">Store Off Banner</h4>
@@ -256,9 +210,6 @@ const OnOffStatusPage = () => {
               <div className="space-y-2 border-t border-slate-200 p-4 dark:border-white/10">
                 <p className="text-sm font-semibold text-slate-800 dark:text-white">
                   {isStoreOpen ? 'Orders are currently open' : 'Orders are currently closed'}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Minimum order value: {Number(storeConfig.min_order_value || 0)}
                 </p>
               </div>
             </div>

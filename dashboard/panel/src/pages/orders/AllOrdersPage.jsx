@@ -304,21 +304,20 @@ const AllOrdersPage = () => {
       </div>
 
       <Card className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto] xl:items-end">
           <Select label="Order Type" name="type" value={filters.type} onChange={handleFilterChange} options={['All', 'ONLINE', 'BILLING']} />
           <Select label="Order Status" name="status" value={filters.status} onChange={handleFilterChange} options={['All', ...orderStatuses]} />
           <Input label="Start Date" name="start_date" type="date" value={filters.start_date} onChange={handleFilterChange} />
           <Input label="End Date" name="end_date" type="date" value={filters.end_date} onChange={handleFilterChange} />
           <Input label="Search" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Order no, customer, phone" />
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-          <Button className="w-full sm:w-auto" icon={Search} onClick={handleApplyFilters}>
-            Apply Filters
-          </Button>
-          <Button className="w-full sm:w-auto" variant="secondary" onClick={handleResetFilters}>
-            Reset
-          </Button>
+          <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-end xl:col-span-1 xl:flex-nowrap">
+            <Button className="w-full whitespace-nowrap sm:w-auto" icon={Search} onClick={handleApplyFilters}>
+              Apply Filters
+            </Button>
+            <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" onClick={handleResetFilters}>
+              Reset
+            </Button>
+          </div>
         </div>
       </Card>
 

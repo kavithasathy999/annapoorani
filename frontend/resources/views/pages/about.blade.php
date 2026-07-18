@@ -3,33 +3,6 @@
 @section('main-page')
 
 <!-- ========================
-             PREMIUM HERO BANNER
-             ======================== -->
-<!-- <section class="premium-hero"> -->
-    <!-- <div class="hero-parallax-bg"
-        style="background-image: url('{{ $about->banner_image ? config('services.asset_base_url') . '/' . ltrim($about->banner_image, '/') : asset('assets/img/ab.jpg') }}');">
-    </div>
-    <div class="hero-glass-overlay"></div> -->
-
-    <!-- <div class="hero-content-wrap">
-        <div class="container">
-            <div class="hero-text-center">
-                <span class="hero-eyebrow"><i class="fa-solid fa-sparkles"></i> {{ $about->hero_eyebrow ?? 'Since 2026' }}</span>
-                <h1 class="hero-display-title">{!! $about->hero_title ?? 'Our <span>About</span> of Brilliance' !!}</h1>
-                <div class="hero-sep"></div>
-                <p class="hero-subtitle">{{ $about->hero_subtitle ?? 'Crafting the Most Spectacular Fireworks in India. Sivakasi\'s Proudest Tradition.' }}</p>
-            </div>
-        </div>
-    </div> -->
-
-    <!-- <div class="scroll-prompt">
-        <div class="scroll-mouse">
-            <span class="scroll-dot"></span>
-        </div>
-    </div>
-</section> -->
-
-<!-- ========================
              NARRATIVE SECTION
              ======================== -->
 <section class="narrative-section">
@@ -39,11 +12,11 @@
             <div class="col-lg-6">
                 <div class="narrative-visual">
                     <div class="visual-stack main">
-                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($about->main_image, '/') }}" alt="Heritage">
+                        <img src="{{ $about->main_image ? config('services.asset_base_url') . '/' . ltrim($about->main_image, '/') : asset('assets/img/about/about.jpg') }}" alt="Heritage">
                         <div class="visual-accent-border"></div>
                     </div>
                     <div class="visual-stack sub">
-                        <img src="{{ config('services.asset_base_url') . '/' . ltrim($about->main_image, '/') }}" alt="Craft">
+                        <img src="{{ $about->banner_image ? config('services.asset_base_url') . '/' . ltrim($about->banner_image, '/') : asset('assets/img/ab.jpg') }}" alt="Craft">
                     </div>
                     <div class="experience-pill">
                         <span class="n-years">{{ $settings->welcome_badge_count ?? '10+' }}</span>

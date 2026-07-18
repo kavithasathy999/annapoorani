@@ -18,7 +18,6 @@ class HomeController extends Controller
             $pageData = Cache::remember('home.page_data', 300, function () {
                 $settings = HomeSetting::first() ?? new HomeSetting();
                 $featuredIds = collect($settings->featured_product_ids ?? [])->filter()->toArray();
-                $brands = Brand::where('is_active', 1)->orderBy('sort_order', 'asc')->get();
 
                 if (count($featuredIds) > 0) {
                     $products = Product::with('category')->whereIn('id', $featuredIds)->get();
@@ -35,12 +34,20 @@ class HomeController extends Controller
                     ->orderBy('category_name')
                     ->get(['id', 'category_name', 'category_image']);
 
-                return compact('products', 'settings', 'brands', 'homeCategories');
+                return compact('products', 'homeCategories');
             });
+
+            // Homepage settings include time-sensitive festival data and must not be stale.
+            $pageData['settings'] = HomeSetting::first() ?? new HomeSetting();
 
             // Keep banner status changes visible immediately instead of serving stale cached banners.
             $pageData['banners'] = BannerImage::where('is_active', 1)
                 ->orderBy('banner_position', 'asc')
+                ->get();
+
+            // Brand activation changes must be visible immediately, independent of the homepage cache.
+            $pageData['brands'] = Brand::where('is_active', 1)
+                ->orderBy('sort_order', 'asc')
                 ->get();
 
             return view('pages.home', $pageData);

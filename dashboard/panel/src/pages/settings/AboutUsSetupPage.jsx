@@ -15,8 +15,15 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/FormFields';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
+import { WebsitePageSelect } from '../../components/ui/WebsitePageSelect';
 import { useToast } from '../../context/ToastContext';
 import { apiRequest, getAssetUrl } from '../../lib/api';
+import { validateImageDimensions } from '../../utils/imageValidation';
+
+const IMAGE_DIMENSIONS = {
+  story_banner_image: { width: 1224, height: 864, label: 'Top Banner Image' },
+  story_main_image: { width: 1224, height: 816, label: 'Main Content Image' },
+};
 
 const ABOUT_TABS = [
   { id: 'story', label: 'Story & Visuals', icon: BookOpen },
@@ -120,6 +127,7 @@ const AboutUsSetupPage = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isValidatingImage, setIsValidatingImage] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -183,27 +191,39 @@ const AboutUsSetupPage = () => {
     }));
   };
 
-  const handleFileChange = (fieldName) => (event) => {
+  const handleFileChange = (fieldName) => async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    setSelectedFiles((current) => ({
-      ...current,
-      [fieldName]: file,
-    }));
+    const fileInput = event.target;
+    setIsValidatingImage(true);
 
-    setPreviews((current) => {
-      if (current[fieldName]?.startsWith('blob:')) {
-        URL.revokeObjectURL(current[fieldName]);
-      }
+    try {
+      const { previewUrl } = await validateImageDimensions(file, IMAGE_DIMENSIONS[fieldName]);
 
-      return {
+      setSelectedFiles((current) => ({
         ...current,
-        [fieldName]: URL.createObjectURL(file),
-      };
-    });
+        [fieldName]: file,
+      }));
+
+      setPreviews((current) => {
+        if (current[fieldName]?.startsWith('blob:')) {
+          URL.revokeObjectURL(current[fieldName]);
+        }
+
+        return {
+          ...current,
+          [fieldName]: previewUrl,
+        };
+      });
+    } catch (error) {
+      fileInput.value = '';
+      addToast(error.message, 'error');
+    } finally {
+      setIsValidatingImage(false);
+    }
   };
 
   const handleSave = async () => {
@@ -212,7 +232,9 @@ const AboutUsSetupPage = () => {
       const payload = new FormData();
 
       Object.entries(form).forEach(([key, value]) => {
-        payload.append(key, value ?? '');
+        if (!['story_banner_image', 'story_main_image'].includes(key)) {
+          payload.append(key, value ?? '');
+        }
       });
 
       if (selectedFiles.story_banner_image) {
@@ -248,7 +270,7 @@ const AboutUsSetupPage = () => {
           previewUrl={previews.story_banner_image}
           emptyLabel="Banner Preview"
           onChange={handleFileChange('story_banner_image')}
-          disabled={isSaving}
+          disabled={isSaving || isValidatingImage}
         />
         <UploadTile
           label="Main Content Image"
@@ -256,7 +278,7 @@ const AboutUsSetupPage = () => {
           previewUrl={previews.story_main_image}
           emptyLabel="Main Image Preview"
           onChange={handleFileChange('story_main_image')}
-          disabled={isSaving}
+          disabled={isSaving || isValidatingImage}
         />
       </div>
 
@@ -466,12 +488,11 @@ const AboutUsSetupPage = () => {
             onChange={handleInputChange}
             placeholder="ESTIMATE NOW"
           />
-          <Input
-            label="Button Link"
+          <WebsitePageSelect
+            label="Button Link URL"
             name="cta_button_link"
             value={form.cta_button_link}
             onChange={handleInputChange}
-            placeholder="/estimate"
           />
         </div>
       </div>
@@ -497,7 +518,7 @@ const AboutUsSetupPage = () => {
         icon={Info}
         subtitle="Manage About page content, visuals, badges, counters, and CTA content."
         action={
-          <Button onClick={handleSave} icon={Save} disabled={isLoading || isSaving}>
+          <Button onClick={handleSave} icon={Save} disabled={isLoading || isSaving || isValidatingImage}>
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         }

@@ -1,7 +1,7 @@
 import { 
   LayoutDashboard, Image as ImageIcon, List, Box, Users, Map, 
   Moon, Receipt, ClipboardEdit, ShoppingBasket, Award, MessageSquare, 
-  Star, Type, FileSearch, PenTool, Globe, Palette, BookOpen, Info, 
+  Star, Type, FileSearch, PenTool, Globe, BookOpen, Info,
   Phone, Monitor, CreditCard, Package, Handshake, ChevronRight, Percent
 } from 'lucide-react';
 
@@ -52,7 +52,6 @@ export const MENU_SECTIONS = [
     title: 'Settings',
     items: [
       { path: '/settings/global', icon: Globe, label: 'Global Settings' },
-      { path: '/settings/theme', icon: Palette, label: 'Theme Settings' },
       { path: '/settings/terms', icon: BookOpen, label: 'Terms & Conditions' },
       { path: '/settings/about', icon: Info, label: 'About Us Setup' },
       { path: '/settings/contact', icon: Phone, label: 'Contact Us Setup' },

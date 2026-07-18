@@ -21,6 +21,12 @@ import { Input } from '../../components/ui/FormFields';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
 import { apiRequest, getAssetUrl } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import { validateImageDimensions } from '../../utils/imageValidation';
+
+const IMAGE_DIMENSIONS = {
+  main_logo: { width: 140, height: 69, label: 'Main Logo' },
+  favicon: { width: 40, height: 40, label: 'Favicon' },
+};
 
 const tabs = [
   { id: 'Brand & Logos', label: 'Brand & Logos', icon: Store },
@@ -125,6 +131,7 @@ const GlobalSettingsPage = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isValidatingImage, setIsValidatingImage] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -181,27 +188,39 @@ const GlobalSettingsPage = () => {
     }));
   };
 
-  const handleFileChange = (fieldName) => (event) => {
+  const handleFileChange = (fieldName) => async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    setSelectedFiles((current) => ({
-      ...current,
-      [fieldName]: file,
-    }));
+    const fileInput = event.target;
+    setIsValidatingImage(true);
 
-    setPreviews((current) => {
-      if (current[fieldName]?.startsWith('blob:')) {
-        URL.revokeObjectURL(current[fieldName]);
-      }
+    try {
+      const { previewUrl } = await validateImageDimensions(file, IMAGE_DIMENSIONS[fieldName]);
 
-      return {
+      setSelectedFiles((current) => ({
         ...current,
-        [fieldName]: URL.createObjectURL(file),
-      };
-    });
+        [fieldName]: file,
+      }));
+
+      setPreviews((current) => {
+        if (current[fieldName]?.startsWith('blob:')) {
+          URL.revokeObjectURL(current[fieldName]);
+        }
+
+        return {
+          ...current,
+          [fieldName]: previewUrl,
+        };
+      });
+    } catch (error) {
+      fileInput.value = '';
+      addToast(error.message, 'error');
+    } finally {
+      setIsValidatingImage(false);
+    }
   };
 
   const handleSave = async () => {
@@ -267,7 +286,7 @@ const GlobalSettingsPage = () => {
           previewUrl={previews.main_logo}
           emptyLabel="Logo Preview"
           onChange={handleFileChange('main_logo')}
-          disabled={isSaving}
+          disabled={isSaving || isValidatingImage}
           previewClassName="h-32 w-full"
         />
         <UploadTile
@@ -276,7 +295,7 @@ const GlobalSettingsPage = () => {
           previewUrl={previews.favicon}
           emptyLabel="ICO"
           onChange={handleFileChange('favicon')}
-          disabled={isSaving}
+          disabled={isSaving || isValidatingImage}
           previewClassName="h-28 w-full"
         />
       </div>
@@ -365,18 +384,10 @@ const GlobalSettingsPage = () => {
       <SectionHeader
         icon={Megaphone}
         title="Advanced & SEO"
-        description="Configure analytics tracking and top offer bar content."
+        description="Configure storefront discount visibility and top offer bar content."
       />
 
       <div className="grid gap-6 md:grid-cols-1">
-        <Input
-          label="Google Analytics ID"
-          name="google_analytics_id"
-          value={form.google_analytics_id}
-          onChange={handleInputChange}
-          placeholder="G-XXXXXXX"
-        />
-        
         <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/[0.02]">
           <div>
             <h4 className="font-medium text-slate-800 dark:text-white">Display Product Discounts</h4>
@@ -429,7 +440,7 @@ const GlobalSettingsPage = () => {
         title="Global Configuration"
         icon={Globe}
         action={
-          <Button onClick={handleSave} icon={Save} disabled={isLoading || isSaving}>
+          <Button onClick={handleSave} icon={Save} disabled={isLoading || isSaving || isValidatingImage}>
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         }

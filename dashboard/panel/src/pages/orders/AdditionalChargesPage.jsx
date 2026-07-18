@@ -119,7 +119,7 @@ const AdditionalChargesPage = () => {
     { key: 'additional_charge_name', label: 'Charge Name' },
     {
       key: 'additional_charge_percentage',
-      label: 'Discount (%)',
+      label: 'Charge (%)',
       className: 'text-center',
       render: (value) => `${Number(value).toLocaleString('en-IN')}%`,
     },
@@ -148,7 +148,7 @@ const AdditionalChargesPage = () => {
       <PageHeader
         title="Global Additional Charge"
         icon={Percent}
-        action={<Button icon={CirclePlus} onClick={openModal}>Add Charge</Button>}
+        action={<Button icon={CirclePlus} onClick={openModal}>Add/Modify Charge</Button>}
       />
 
       {isLoading ? (
@@ -201,7 +201,7 @@ const AdditionalChargesPage = () => {
             )}
 
             <Input
-              label="Discount (%)"
+              label="Charge (%)"
               type="number"
               min="0.01"
               max={MAX_PERCENTAGE}

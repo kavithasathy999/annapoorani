@@ -58,19 +58,17 @@
                             </div>
 
                             <!-- Phone -->
+                            @if(filled($contact->phone))
                             <div class="info-block">
                                 <div class="ib-icon"><i class="fa-solid fa-phone-volume"></i></div>
                                 <div class="ib-content">
                                     <h6>Speak to an Artisan</h6>
                                     <p>
-                                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $contact->phone ?? '') }}">{{ $contact->phone ?? '+91 90259 78152' }}</a>
-                                        @if($contact->phone_2)
-                                        <span class="mx-2">|</span>
-                                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $contact->phone_2) }}">{{ $contact->phone_2 }}</a>
-                                        @endif
+                                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $contact->phone) }}">{{ $contact->phone }}</a>
                                     </p>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Email -->
                             <div class="info-block">

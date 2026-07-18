@@ -12,6 +12,7 @@ class BannerImage extends Model
     protected $table = 'banner_images';
 
     protected $fillable = [
+        'name',
         'banner_image',
         'banner_position',
         'is_active',

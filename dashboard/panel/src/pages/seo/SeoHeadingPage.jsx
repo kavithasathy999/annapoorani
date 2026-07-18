@@ -10,6 +10,8 @@ import { Modal } from '../../components/ui/Modal';
 import { Input, Select } from '../../components/ui/FormFields';
 import { apiRequest } from '../../lib/api';
 
+const getPageNameLabel = (pageName) => (pageName === 'Catalogue' ? 'Products' : pageName);
+
 const SeoHeadingPage = () => {
   const { addToast } = useToast();
   const { confirmDelete } = useConfirm();
@@ -161,6 +163,7 @@ const SeoHeadingPage = () => {
       seoHeadings.map((heading, index) => ({
         ...heading,
         serial: index + 1,
+        pageNameLabel: getPageNameLabel(heading.page_name),
       })),
     [seoHeadings]
   );
@@ -169,7 +172,7 @@ const SeoHeadingPage = () => {
     () => [
       { key: 'serial', label: 'S.No' },
       {
-        key: 'page_name',
+        key: 'pageNameLabel',
         label: 'Page Name',
         render: (value) => <span className="font-medium text-slate-800 dark:text-white">{value}</span>,
       },
@@ -187,7 +190,7 @@ const SeoHeadingPage = () => {
               type="button"
               onClick={() => openEditModal(row)}
               className="rounded bg-emerald-50 p-1.5 text-emerald-600 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
-              title={`Edit ${row.page_name}`}
+              title={`Edit ${row.pageNameLabel}`}
               disabled={isSaving}
             >
               <Edit className="h-4 w-4" />
@@ -196,7 +199,7 @@ const SeoHeadingPage = () => {
               type="button"
               onClick={() => handleDelete(row)}
               className="rounded bg-rose-50 p-1.5 text-rose-600 transition-colors hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
-              title={`Delete ${row.page_name}`}
+              title={`Delete ${row.pageNameLabel}`}
               disabled={isSaving}
             >
               <Trash className="h-4 w-4" />
@@ -280,7 +283,7 @@ const SeoHeadingPage = () => {
               { value: '', label: 'Select a page' },
               { value: 'Home', label: 'Home' },
               { value: 'About Us', label: 'About Us' },
-              { value: 'Catalogue', label: 'Catalogue' },
+              { value: 'Catalogue', label: 'Products' },
               { value: 'Safety Tips', label: 'Safety Tips' },
               { value: 'Contact', label: 'Contact' }
             ]}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Edit, Trash, LoaderCircle, UploadCloud, Percent, Download } from 'lucide-react';
+import { Plus, Package, Edit, Trash, LoaderCircle, UploadCloud, Percent, Download, IndianRupee } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useConfirm } from '../../context/ConfirmContext';
 import { PageHeader } from '../../components/ui/PageHeader';
@@ -99,6 +99,7 @@ const ProductsPage = () => {
   const [isBulkUploading, setIsBulkUploading] = useState(false);
   const [targetValue, setTargetValue] = useState('');
   const [gstValue, setGstValue] = useState('0');
+  const [gstType, setGstType] = useState('exclusive');
 
   const loadProductsPage = useCallback(async () => {
     try {
@@ -116,9 +117,11 @@ const ProductsPage = () => {
       const currentDiscount = String(storeResponse.data?.global_discount ?? 0);
       const currentTarget = String(storeResponse.data?.min_order_value ?? 0);
       const currentGst = String(storeResponse.data?.global_gst ?? 0);
+      const currentGstType = storeResponse.data?.gst_type === 'inclusive' ? 'inclusive' : 'exclusive';
       setDiscountValue(currentDiscount);
       setTargetValue(currentTarget);
       setGstValue(currentGst);
+      setGstType(currentGstType);
     } catch (error) {
       addToast(error.message || 'Unable to load products.', 'error');
     } finally {
@@ -248,10 +251,15 @@ const ProductsPage = () => {
           min_order_value: Number(storeConfig.min_order_value ?? 0),
           global_discount: Number(storeConfig.global_discount ?? 0),
           global_gst: Number(gstValue || 0),
+          gst_type: gstType,
         },
       });
 
-      setStoreConfig((current) => ({ ...current, global_gst: Number(gstValue || 0) }));
+      setStoreConfig((current) => ({
+        ...current,
+        global_gst: Number(gstValue || 0),
+        gst_type: gstType,
+      }));
       setIsGstModalOpen(false);
       addToast('Overall GST updated successfully.');
     } catch (error) {
@@ -469,8 +477,8 @@ const ProductsPage = () => {
              <Button variant="danger" icon={Trash} onClick={handleDeleteAll}>
                 Delete All
              </Button>
-             <Button variant="secondary" icon={Percent} onClick={() => setIsTargetModalOpen(true)}>
-                Minimum Target
+             <Button variant="secondary" icon={IndianRupee} onClick={() => setIsTargetModalOpen(true)}>
+                Minimum Order Value
              </Button>
              <Button variant="secondary" icon={Percent} onClick={() => setIsGstModalOpen(true)}>
                 Overall GST
@@ -500,7 +508,7 @@ const ProductsPage = () => {
             Overall Discount: {storeConfig.global_discount ?? 0}%
          </span>
          <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-            Overall GST: {storeConfig.global_gst ?? 0}%
+            Overall GST: {storeConfig.global_gst ?? 0}% ({storeConfig.gst_type === 'inclusive' ? 'Inclusive' : 'Exclusive'})
          </span>
       </div>
 
@@ -571,6 +579,16 @@ const ProductsPage = () => {
               { label: '12%', value: '12' },
               { label: '18%', value: '18' },
               { label: '28%', value: '28' },
+            ]}
+          />
+          <Select
+            label="GST Type"
+            name="gst_type"
+            value={gstType}
+            onChange={(event) => setGstType(event.target.value)}
+            options={[
+              { label: 'Inclusive', value: 'inclusive' },
+              { label: 'Exclusive', value: 'exclusive' },
             ]}
           />
           <Button className="w-full" onClick={handleSaveGst} disabled={isSavingGst}>

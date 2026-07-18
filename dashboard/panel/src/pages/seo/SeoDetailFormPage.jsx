@@ -8,6 +8,9 @@ import { Card } from '../../components/ui/Card';
 import { Input, Select } from '../../components/ui/FormFields';
 import { WYSIWYGEditor } from '../../components/ui/WYSIWYGEditor';
 import { apiRequest, getAssetUrl } from '../../lib/api';
+import { validateImageDimensions } from '../../utils/imageValidation';
+
+const SEO_IMAGE_DIMENSIONS = { width: 1200, height: 630, label: 'SEO Image' };
 
 const initialFormValues = {
   seo_heading_id: '',
@@ -35,6 +38,7 @@ const SeoDetailFormPage = () => {
   const [existingImage, setExistingImage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isValidatingImage, setIsValidatingImage] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -121,19 +125,31 @@ const SeoDetailFormPage = () => {
     }));
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    setSelectedFile(file);
-    setPreviewUrl((current) => {
-      if (current.startsWith('blob:')) {
-        URL.revokeObjectURL(current);
-      }
-      return URL.createObjectURL(file);
-    });
+    const fileInput = event.target;
+    setIsValidatingImage(true);
+
+    try {
+      const { previewUrl: nextPreviewUrl } = await validateImageDimensions(file, SEO_IMAGE_DIMENSIONS);
+
+      setSelectedFile(file);
+      setPreviewUrl((current) => {
+        if (current.startsWith('blob:')) {
+          URL.revokeObjectURL(current);
+        }
+        return nextPreviewUrl;
+      });
+    } catch (error) {
+      fileInput.value = '';
+      addToast(error.message, 'error');
+    } finally {
+      setIsValidatingImage(false);
+    }
   };
 
   const validateForm = () => {
@@ -213,7 +229,7 @@ const SeoDetailFormPage = () => {
             <Button variant="secondary" onClick={() => navigate('/seo/details')} icon={ArrowLeft}>
               Back
             </Button>
-            <Button onClick={handleSubmit} icon={Save} disabled={isSubmitting || isLoading}>
+            <Button onClick={handleSubmit} icon={Save} disabled={isSubmitting || isLoading || isValidatingImage}>
               {isSubmitting ? 'Saving...' : isEditMode ? 'Update SEO' : 'Create SEO'}
             </Button>
           </div>
@@ -290,7 +306,7 @@ const SeoDetailFormPage = () => {
                   Image * <span className="text-rose-400">(1200 x 630 px)</span>
                 </span>
                 <div className="cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center transition-colors hover:bg-slate-100 dark:border-white/20 dark:bg-white/[0.01] dark:hover:bg-white/[0.03]">
-                  <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isValidatingImage} />
                   <UploadCloud className="mx-auto mb-3 h-9 w-9 text-slate-400" />
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Click to choose SEO image</p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">PNG, JPG, WEBP, SVG up to 10MB</p>

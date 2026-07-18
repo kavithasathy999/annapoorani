@@ -24,6 +24,8 @@ class Order extends Model
         'status',
         'payment_status',
         'notes',
+        'is_gst_applied',
+        'total_gst',
         'order_date',
     ];
 }

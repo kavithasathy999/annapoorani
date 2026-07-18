@@ -6,6 +6,8 @@ use App\Mail\EstimateMail;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderSlot;
+use App\Support\CartPricing;
+use App\Support\OrderNumberGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +41,8 @@ class OrderController extends Controller
         }
 
         try {
+            $pricing = CartPricing::calculate($cartItems);
+            $cartItems = $pricing['items'];
             $globalCharges = DB::table('settings')
                 ->whereIn('setting_key', ['additional_charge_name', 'additional_charge_percentage'])
                 ->pluck('setting_value', 'setting_key')
@@ -46,27 +50,26 @@ class OrderController extends Controller
 
             $chargeName = trim((string) ($globalCharges['additional_charge_name'] ?? ''));
             $chargePercentage = min(max((float) ($globalCharges['additional_charge_percentage'] ?? 0), 0), 100);
-            $productSubtotal = collect($cartItems)->sum(fn ($item) => (float) ($item['total'] ?? 0));
-            $totalGst = collect($cartItems)->sum(fn ($item) => (float) ($item['item_gst'] ?? 0));
+            $productSubtotal = $pricing['discounted_subtotal'];
+            $totalGst = $pricing['total_gst'];
             $additionalChargeAmount = $chargeName !== '' && $chargePercentage > 0
                 ? round(($productSubtotal * $chargePercentage) / 100, 2)
                 : 0;
-            $netTotal = round($productSubtotal + $totalGst + $additionalChargeAmount, 2);
-            $actualTotal = collect($cartItems)->sum(
-                fn ($item) => (float) ($item['actual'] ?? $item['price']) * (int) $item['qty']
-            );
+            $netTotal = round($productSubtotal + $pricing['payable_gst'] + $additionalChargeAmount, 2);
+            $actualTotal = $pricing['actual_total'];
             $globalCharges['additional_charge_amount'] = $additionalChargeAmount;
 
             $result = DB::transaction(function () use (
                 $request,
                 $cartItems,
                 $netTotal,
+                $pricing,
+                $totalGst,
                 $chargeName,
                 $additionalChargeAmount
             ) {
 
-                $lastId     = DB::table('product_orders')->lockForUpdate()->max('id') ?? 0;
-                $newOrderId = 'order' . str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
+                $newOrderId = OrderNumberGenerator::generate();
 
                 $customer = Customer::create([
                     'user_id'      => null,
@@ -82,10 +85,12 @@ class OrderController extends Controller
                 $order = Order::create([
                     'order_no'  => $newOrderId,
                     'customer_id'   => $customer->id,
-                    'sub_total' => $request->sub_total,
+                    'sub_total' => $pricing['actual_total'],
                     'shipping' => $additionalChargeAmount,
-                    'discount' => 0,
+                    'discount' => $pricing['discount'],
                     'total'     => $netTotal,
+                    'is_gst_applied' => $totalGst > 0,
+                    'total_gst' => $totalGst,
                     'additional_charge_type' => $chargeName ?: null,
                     'additional_charge_amount' => $additionalChargeAmount,
                     'status'    => 'Pending',
@@ -101,6 +106,9 @@ class OrderController extends Controller
                         'product_name'  => $item['product_name'],
                         'product_total' => $item['total'],
                         'qty'           => $item['qty'],
+                        'is_gst_applied' => $item['is_gst_applied'],
+                        'item_gst' => $item['item_gst'],
+                        'product_gst_rate' => $item['gst_rate'],
                     ]);
                 }
 

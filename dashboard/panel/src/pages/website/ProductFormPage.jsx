@@ -7,6 +7,9 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input, Select } from '../../components/ui/FormFields';
 import { apiRequest, getAssetUrl } from '../../lib/api';
+import { validateImageDimensions } from '../../utils/imageValidation';
+
+const PRODUCT_IMAGE_DIMENSIONS = { width: 670, height: 800, label: 'Product Image' };
 
 const initialForm = {
   category_id: '',
@@ -37,6 +40,7 @@ const ProductFormPage = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isValidatingImage, setIsValidatingImage] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -119,18 +123,30 @@ const ProductFormPage = () => {
     });
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    if (previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    const fileInput = event.target;
+    setIsValidatingImage(true);
 
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    try {
+      const { previewUrl: nextPreviewUrl } = await validateImageDimensions(file, PRODUCT_IMAGE_DIMENSIONS);
+
+      if (previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
+      setSelectedFile(file);
+      setPreviewUrl(nextPreviewUrl);
+    } catch (error) {
+      fileInput.value = '';
+      addToast(error.message, 'error');
+    } finally {
+      setIsValidatingImage(false);
+    }
   };
 
   const categoryOptions = useMemo(
@@ -228,7 +244,7 @@ const ProductFormPage = () => {
             <Button variant="secondary" onClick={() => navigate('/website/products')} icon={ArrowLeft}>
               Back
             </Button>
-            <Button icon={Save} onClick={handleSubmit} disabled={isSubmitting || isLoading}>
+            <Button icon={Save} onClick={handleSubmit} disabled={isSubmitting || isLoading || isValidatingImage}>
               {isSubmitting ? 'Saving...' : isEditMode ? 'Update Product' : 'Add product'}
             </Button>
           </div>
@@ -374,7 +390,7 @@ const ProductFormPage = () => {
                   </span>
                   <span className="sr-only">Upload Image</span>
                   <div className="flex h-[155px] w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 p-4 text-center transition-colors hover:bg-slate-100/80 dark:border-white/20 dark:bg-[#0a0a0f]/50 dark:hover:bg-white/[0.04]">
-                     <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                     <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isValidatingImage} />
                      {previewUrl ? (
                         <img src={previewUrl} alt="Product preview" className="h-full max-h-[120px] w-full rounded-md object-contain" />
                      ) : (
@@ -415,7 +431,7 @@ const ProductFormPage = () => {
           </div>
 
           <div className="flex justify-center pt-4">
-            <Button className="px-8 py-2.5 text-[15px]" icon={Save} onClick={handleSubmit} disabled={isSubmitting}>
+            <Button className="px-8 py-2.5 text-[15px]" icon={Save} onClick={handleSubmit} disabled={isSubmitting || isValidatingImage}>
               {isSubmitting ? 'Saving...' : isEditMode ? 'Update product' : 'Add product'}
             </Button>
           </div>

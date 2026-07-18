@@ -5,6 +5,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/FormFields';
+import { WebsitePageSelect } from '../../components/ui/WebsitePageSelect';
 import { apiRequest } from '../../lib/api';
 
 const initialForm = {
@@ -185,12 +186,11 @@ const FestivalOfferPage = () => {
                   )}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <Input
+                  <WebsitePageSelect
                     label="Button Link URL"
                     name="offer_button_link"
                     value={form.offer_button_link}
                     onChange={handleInputChange}
-                    placeholder="e.g. estimate"
                     disabled={isSaving}
                   />
                   {errors.offer_button_link && (

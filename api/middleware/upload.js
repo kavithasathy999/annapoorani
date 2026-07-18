@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { imageSize } = require('image-size');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '..', process.env.UPLOAD_DIR || 'uploads');
@@ -91,6 +92,60 @@ upload.handleFieldsErrors = (fields) => {
       }
       next();
     });
+  };
+};
+
+const removeUploadedFile = (file) => {
+  if (!file?.path) {
+    return;
+  }
+
+  try {
+    fs.unlinkSync(file.path);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error(`Unable to remove rejected upload ${file.path}:`, error.message);
+    }
+  }
+};
+
+const getUploadedFiles = (req) => [
+  ...(req.file ? [req.file] : []),
+  ...Object.values(req.files || {}).flat(),
+];
+
+upload.validateImageDimensions = (rules) => {
+  return (req, res, next) => {
+    const uploadedFiles = getUploadedFiles(req);
+    if (uploadedFiles.length === 0) {
+      return next();
+    }
+
+    try {
+      for (const file of uploadedFiles) {
+        const rule = rules[file.fieldname];
+        if (!rule) {
+          continue;
+        }
+
+        const dimensions = imageSize(fs.readFileSync(file.path));
+        if (dimensions.width !== rule.width || dimensions.height !== rule.height) {
+          uploadedFiles.forEach(removeUploadedFile);
+          return res.status(400).json({
+            success: false,
+            message: `${rule.label} must be exactly ${rule.width} x ${rule.height} px. Selected image is ${dimensions.width} x ${dimensions.height} px.`,
+          });
+        }
+      }
+
+      return next();
+    } catch (error) {
+      uploadedFiles.forEach(removeUploadedFile);
+      return res.status(400).json({
+        success: false,
+        message: 'Unable to validate the uploaded image dimensions.',
+      });
+    }
   };
 };
 

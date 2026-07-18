@@ -34,7 +34,6 @@ import SeoHeadingPage from './pages/seo/SeoHeadingPage';
 import SeoDetailsPage from './pages/seo/SeoDetailsPage';
 import SeoDetailFormPage from './pages/seo/SeoDetailFormPage';
 import GlobalSettingsPage from './pages/settings/GlobalSettingsPage';
-import ThemeSettingsPage from './pages/settings/ThemeSettingsPage';
 import TermsConditionsPage from './pages/settings/TermsConditionsPage';
 import AboutUsSetupPage from './pages/settings/AboutUsSetupPage';
 import ContactUsSetupPage from './pages/settings/ContactUsSetupPage';
@@ -98,7 +97,6 @@ function AppContent() {
           
           {/* Settings Routes */}
           <Route path="/settings/global" element={<GlobalSettingsPage />} />
-          <Route path="/settings/theme" element={<ThemeSettingsPage />} />
           <Route path="/settings/terms" element={<TermsConditionsPage />} />
           <Route path="/settings/about" element={<AboutUsSetupPage />} />
           <Route path="/settings/contact" element={<ContactUsSetupPage />} />

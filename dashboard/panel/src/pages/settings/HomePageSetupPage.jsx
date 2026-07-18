@@ -16,7 +16,11 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/FormFields';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
+import { WebsitePageSelect } from '../../components/ui/WebsitePageSelect';
 import { apiRequest, getAssetUrl } from '../../lib/api';
+import { validateImageDimensions } from '../../utils/imageValidation';
+
+const HERO_IMAGE_DIMENSIONS = { width: 1920, height: 686, label: 'Section Image' };
 
 const tabs = [
   { id: 'Welcome Section', label: 'Welcome Section', icon: Home },
@@ -31,6 +35,7 @@ const initialForm = {
   hero_badge_1_text: '',
   hero_badge_2_text: '',
   hero_badge_3_text: '',
+  hero_badge_4_text: '',
   hero_section_image: '',
   hero_cta_text: '',
   hero_cta_link: '',
@@ -165,6 +170,7 @@ const HomePageSetupPage = () => {
   const [previews, setPreviews] = useState({ hero_section_image: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isValidatingImage, setIsValidatingImage] = useState(false);
 
   const selectedProductsCount = form.featured_product_ids.length;
 
@@ -233,27 +239,39 @@ const HomePageSetupPage = () => {
     }));
   };
 
-  const handleFileChange = (fieldName) => (event) => {
+  const handleFileChange = (fieldName) => async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    setSelectedFiles((current) => ({
-      ...current,
-      [fieldName]: file,
-    }));
+    const fileInput = event.target;
+    setIsValidatingImage(true);
 
-    setPreviews((current) => {
-      if (current[fieldName]?.startsWith('blob:')) {
-        URL.revokeObjectURL(current[fieldName]);
-      }
+    try {
+      const { previewUrl } = await validateImageDimensions(file, HERO_IMAGE_DIMENSIONS);
 
-      return {
+      setSelectedFiles((current) => ({
         ...current,
-        [fieldName]: URL.createObjectURL(file),
-      };
-    });
+        [fieldName]: file,
+      }));
+
+      setPreviews((current) => {
+        if (current[fieldName]?.startsWith('blob:')) {
+          URL.revokeObjectURL(current[fieldName]);
+        }
+
+        return {
+          ...current,
+          [fieldName]: previewUrl,
+        };
+      });
+    } catch (error) {
+      fileInput.value = '';
+      addToast(error.message, 'error');
+    } finally {
+      setIsValidatingImage(false);
+    }
   };
 
   const handleProductToggle = (productId) => {
@@ -378,9 +396,9 @@ const HomePageSetupPage = () => {
         <SectionHeader
           icon={BadgeCheck}
           title="Feature Badges"
-          description="Manage the 3 fixed homepage badges shown beneath the welcome copy."
+          description="Manage the 4 fixed homepage badges shown beneath the welcome copy."
         />
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Input
             label="Badge 1"
             name="hero_badge_1_text"
@@ -399,6 +417,12 @@ const HomePageSetupPage = () => {
             value={form.hero_badge_3_text}
             onChange={handleInputChange}
           />
+          <Input
+            label="Badge 4"
+            name="hero_badge_4_text"
+            value={form.hero_badge_4_text}
+            onChange={handleInputChange}
+          />
         </div>
       </div>
 
@@ -409,7 +433,7 @@ const HomePageSetupPage = () => {
           previewUrl={previews.hero_section_image}
           emptyLabel="Homepage Preview"
           onChange={handleFileChange('hero_section_image')}
-          disabled={isSaving}
+          disabled={isSaving || isValidatingImage}
         />
 
         <div className="space-y-6">
@@ -420,12 +444,11 @@ const HomePageSetupPage = () => {
             onChange={handleInputChange}
             placeholder="Read More About Bluvel Crackers"
           />
-          <Input
+          <WebsitePageSelect
             label="Button Link URL"
             name="hero_cta_link"
             value={form.hero_cta_link}
             onChange={handleInputChange}
-            placeholder="/about"
           />
         </div>
       </div>
@@ -593,7 +616,7 @@ const HomePageSetupPage = () => {
         icon={Home}
         subtitle="Manage welcome content, featured products, and the Why Choose Us section for the homepage."
         action={
-          <Button onClick={handleSave} icon={Save} disabled={isLoading || isSaving}>
+          <Button onClick={handleSave} icon={Save} disabled={isLoading || isSaving || isValidatingImage}>
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         }

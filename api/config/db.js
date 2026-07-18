@@ -151,13 +151,28 @@ const ensureBannersSchema = async (connection) => {
     [databaseName]
   );
   const existingColumns = new Set(columnRows.map((row) => row.COLUMN_NAME));
+  const alterClauses = [];
 
-  if (!existingColumns.has('is_active')) {
-    await connection.query(
-      'ALTER TABLE banner_images ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER banner_position'
-    );
-    console.log('Banner status schema added for legacy database.');
+  if (!existingColumns.has('name')) {
+    alterClauses.push('ADD COLUMN name VARCHAR(255) DEFAULT NULL AFTER id');
   }
+  if (!existingColumns.has('link')) {
+    alterClauses.push('ADD COLUMN link TEXT DEFAULT NULL AFTER banner_image');
+  }
+  if (!existingColumns.has('is_active')) {
+    alterClauses.push('ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER banner_position');
+  }
+
+  if (alterClauses.length > 0) {
+    await connection.query(`ALTER TABLE banner_images ${alterClauses.join(', ')}`);
+    console.log('Banner schema updated for legacy database.');
+  }
+
+  await connection.query(
+    `UPDATE banner_images
+     SET name = CONCAT('Banner ', id)
+     WHERE name IS NULL OR TRIM(name) = ''`
+  );
 };
 
 const ensureBillingOrdersSchema = async (connection) => {
@@ -363,6 +378,63 @@ const ensureContactEnquiriesSchema = async (connection) => {
   }
 };
 
+const ensureStoreConfigSchema = async (connection) => {
+  const [tableRows] = await connection.query(`SHOW TABLES LIKE 'store_config'`);
+  if (tableRows.length > 0) {
+    return;
+  }
+
+  await connection.query(`
+    CREATE TABLE store_config (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      is_store_open TINYINT(1) DEFAULT 1,
+      min_order_value DECIMAL(10, 2) DEFAULT 2000.00,
+      global_discount DECIMAL(5, 2) DEFAULT 0.00,
+      off_banner_image VARCHAR(255) DEFAULT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  let isStoreOpen = 1;
+  let minimumOrderValue = 2000;
+  let globalDiscount = 0;
+  let offBannerImage = null;
+
+  const [pageOffTableRows] = await connection.query(`SHOW TABLES LIKE 'page_off'`);
+  if (pageOffTableRows.length > 0) {
+    const [pageOffRows] = await connection.query(
+      'SELECT status, image FROM page_off ORDER BY id ASC LIMIT 1'
+    );
+    isStoreOpen = Number(pageOffRows[0]?.status ?? isStoreOpen);
+    offBannerImage = pageOffRows[0]?.image || null;
+  }
+
+  const [homeSettingsTableRows] = await connection.query(`SHOW TABLES LIKE 'home_settings'`);
+  if (homeSettingsTableRows.length > 0) {
+    const [homeSettingsRows] = await connection.query(
+      'SELECT min_order_value FROM home_settings ORDER BY id ASC LIMIT 1'
+    );
+    minimumOrderValue = Number(homeSettingsRows[0]?.min_order_value ?? minimumOrderValue);
+  }
+
+  const [discountTableRows] = await connection.query(`SHOW TABLES LIKE 'discounts'`);
+  if (discountTableRows.length > 0) {
+    const [discountRows] = await connection.query(
+      'SELECT discount FROM discounts ORDER BY id DESC LIMIT 1'
+    );
+    globalDiscount = Number(discountRows[0]?.discount ?? globalDiscount);
+  }
+
+  await connection.query(
+    `INSERT INTO store_config
+      (is_store_open, min_order_value, global_discount, off_banner_image)
+     VALUES (?, ?, ?, ?)`,
+    [isStoreOpen, minimumOrderValue, globalDiscount, offBannerImage]
+  );
+
+  console.log('Store config table created for legacy database.');
+};
+
 const ensureSettingsDefaults = async (connection) => {
   const [tableRows] = await connection.query(`SHOW TABLES LIKE 'settings'`);
   if (tableRows.length === 0) {
@@ -489,6 +561,7 @@ const initializeDatabase = async () => {
     await ensureSeoDetailsSchema(connection);
     await ensureBlogsSchema(connection);
     await ensureContactEnquiriesSchema(connection);
+    await ensureStoreConfigSchema(connection);
     await ensureSettingsDefaults(connection);
     await ensureDefaultAdmin(connection);
   } catch (error) {

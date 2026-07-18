@@ -4,6 +4,9 @@ const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 const router = express.Router();
+const validateProductImageDimensions = upload.validateImageDimensions({
+  image: { width: 670, height: 800, label: 'Product Image' },
+});
 
 const toStockLabel = (value) => Number(value ?? 1) > 0 ? 'In Stock' : 'Out of Stock';
 
@@ -102,7 +105,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/products
-router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
+router.post('/', auth, upload.handleErrors('image'), validateProductImageDimensions, async (req, res) => {
   try {
     const categoryId = Number(req.body.category_id);
     const name = req.body.name?.trim();
@@ -143,7 +146,7 @@ router.post('/', auth, upload.handleErrors('image'), async (req, res) => {
 });
 
 // PUT /api/products/:id
-router.put('/:id', auth, upload.handleErrors('image'), async (req, res) => {
+router.put('/:id', auth, upload.handleErrors('image'), validateProductImageDimensions, async (req, res) => {
   try {
     const categoryId = Number(req.body.category_id);
     const name = req.body.name?.trim();

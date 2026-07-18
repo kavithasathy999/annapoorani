@@ -64,6 +64,9 @@ class EstimateController extends Controller
         $globalSettings = Cache::remember('layout.global_settings', 300, fn () => GlobalSetting::first() ?? new GlobalSetting());
         $minOrder = $settings->min_order_value ?? 0;
         $globalGst = $settings->global_gst ?? 0;
+        $gstType = in_array($settings->gst_type, ['inclusive', 'exclusive'], true)
+            ? $settings->gst_type
+            : 'exclusive';
         $showDiscount = $globalSettings->show_discount ?? true;
 
         return view('pages.estimate', compact(
@@ -76,6 +79,7 @@ class EstimateController extends Controller
             'settings',
             'minOrder',
             'globalGst',
+            'gstType',
             'showDiscount'
         ));
     }
@@ -89,12 +93,15 @@ class EstimateController extends Controller
         $lastProductUpdate       = Product::max('updated_at');
         $lastHomeSettingUpdate   = \App\Models\HomeSetting::max('updated_at');
         $lastGlobalSettingUpdate = \App\Models\GlobalSetting::max('updated_at');
+        $priceListTemplatePath   = resource_path('views/pdf/price-list.blade.php');
+        $lastTemplateUpdate      = file_exists($priceListTemplatePath) ? filemtime($priceListTemplatePath) : 0;
 
         $latestDbUpdate = max(
             $lastCategoryUpdate ? strtotime($lastCategoryUpdate) : 0,
             $lastProductUpdate ? strtotime($lastProductUpdate) : 0,
             $lastHomeSettingUpdate ? strtotime($lastHomeSettingUpdate) : 0,
-            $lastGlobalSettingUpdate ? strtotime($lastGlobalSettingUpdate) : 0
+            $lastGlobalSettingUpdate ? strtotime($lastGlobalSettingUpdate) : 0,
+            $lastTemplateUpdate
         );
 
         $shouldRegenerate = true;

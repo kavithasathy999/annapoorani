@@ -50,9 +50,9 @@
                     <i class="fa-solid fa-chevron-down hdr-lang-arrow"></i>
                 </button>
                 <div class="hdr-lang-drop" id="langDrop">
-                    <button onclick="changeLang('en')" class="hdr-lang-opt" id="btn-en">English</button>
-                    <button onclick="changeLang('ta')" class="hdr-lang-opt" id="btn-ta">தமிழ்</button>
-                    <button onclick="changeLang('kn')" class="hdr-lang-opt" id="btn-kn">ಕನ್ನಡ</button>
+                    <button type="button" class="hdr-lang-opt" data-language="en">English</button>
+                    <button type="button" class="hdr-lang-opt" data-language="ta">தமிழ்</button>
+                    <button type="button" class="hdr-lang-opt" data-language="kn">ಕನ್ನಡ</button>
                 </div>
             </div>
 
@@ -94,9 +94,9 @@
         </nav>
         <div class="hdr-mobile-footer">
             <div class="hdr-mobile-langs">
-                <button onclick="changeLang('en')" class="hdr-mlang-btn" id="btn-en">EN</button>
-                <button onclick="changeLang('ta')" class="hdr-mlang-btn" id="btn-ta">தமிழ்</button>
-                <button onclick="changeLang('kn')" class="hdr-mlang-btn" id="btn-kn">ಕನ்ನಡ</button>
+                <button type="button" class="hdr-mlang-btn" data-language="en">EN</button>
+                <button type="button" class="hdr-mlang-btn" data-language="ta">தமிழ்</button>
+                <button type="button" class="hdr-mlang-btn" data-language="kn">ಕನ್ನಡ</button>
             </div>
             <a href="{{ route('pricelist.download') }}" class="hdr-mobile-cta hdr-mobile-cta-download">
                 <i class="fa-solid fa-download"></i> Download Price List
@@ -566,6 +566,12 @@ let pendingLanguage = 'en';
 let translateScriptRequested = false;
 let translateApplyTimer = null;
 
+function syncGoogleTranslateCookie(lang) {
+    const cookieValue = `/en/${lang}`;
+    const secureAttribute = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `googtrans=${cookieValue}; path=/; SameSite=Lax${secureAttribute}`;
+}
+
 function applyGoogleTranslation(lang) {
     const gTranslate = document.querySelector('.goog-te-combo');
     if (!gTranslate || !Array.from(gTranslate.options).some(option => option.value === lang)) {
@@ -625,13 +631,19 @@ function loadGoogleTranslate(lang) {
 function changeLang(lang) {
     pendingLanguage = lang;
     localStorage.setItem('user_lang', lang);
+    syncGoogleTranslateCookie(lang);
+    document.documentElement.lang = lang;
+
     const labels = { en: 'EN', ta: 'தமிழ்', kn: 'ಕನ್ನಡ' };
-    document.getElementById('langLabel').textContent = labels[lang] || 'EN';
-    document.querySelectorAll('.hdr-lang-opt, .hdr-mlang-btn').forEach(b => b.classList.remove('active'));
-    ['btn-en', 'btn-ta', 'btn-kn'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el && id === 'btn-' + lang) el.classList.add('active');
+    const langLabel = document.getElementById('langLabel');
+    if (langLabel) {
+        langLabel.textContent = labels[lang] || 'EN';
+    }
+
+    document.querySelectorAll('[data-language]').forEach(button => {
+        button.classList.toggle('active', button.dataset.language === lang);
     });
+
     if (lang === 'en') {
         clearInterval(translateApplyTimer);
         translateApplyTimer = null;
@@ -640,6 +652,17 @@ function changeLang(lang) {
         loadGoogleTranslate(lang);
     }
 }
+
+document.querySelectorAll('[data-language]').forEach(button => {
+    button.addEventListener('click', () => {
+        changeLang(button.dataset.language);
+        langParent?.classList.remove('open');
+
+        if (button.closest('.hdr-mobile')) {
+            closeMobileMenu();
+        }
+    });
+});
 
 /* Init saved language */
 document.addEventListener('DOMContentLoaded', () => {

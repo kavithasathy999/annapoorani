@@ -73,9 +73,6 @@
             box-sizing: border-box;
             transition-duration: .25s !important;
             transition-timing-function: ease !important;
-            animation-duration: .55s !important;
-            animation-iteration-count: 1 !important;
-            animation-timing-function: ease !important;
         }
         body {
             font-family: var(--font-body);
@@ -345,14 +342,16 @@
     @include('layouts.header')
     <main class="site-main" id="mainContent">
         @php
-            $isOff = $pageOff && (int) $pageOff->status === 0 && !empty($pageOff->image);
+            $isOff = $pageOff && (int) $pageOff->status === 0;
         @endphp
         @if($isOff)
             <section class="maintenance-luxury">
-                <div class="m-container">
+                <div class="m-container {{ empty($pageOff->image) ? 'm-container--text-only' : '' }}">
+                    @if(!empty($pageOff->image))
                     <div class="m-visual">
                         <img src="{{ config('services.asset_base_url') . '/' . ltrim($pageOff->image, '/') }}" alt="Maintenance">
                     </div>
+                    @endif
                     <div class="m-content">
                         <h2>Under <span>Maintenance</span></h2>
                         <p>Our artisans are currently refining your experience. We will be back with even more brilliance shortly.</p>
@@ -378,6 +377,15 @@
                     gap: 60px;
                     align-items: center;
                     z-index: 2;
+                }
+                .m-container--text-only {
+                    grid-template-columns: minmax(0, 720px);
+                    justify-content: center;
+                    text-align: center;
+                }
+                .m-container--text-only .m-divider {
+                    margin-left: auto;
+                    margin-right: auto;
                 }
                 .m-visual img {
                     width: 100%;

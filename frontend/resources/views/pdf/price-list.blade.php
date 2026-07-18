@@ -37,11 +37,9 @@
             font-size: 11px;
             color: #444;
         }
-        .original-text {
-            font-size: 12px;
-            color: #777;
-            margin-bottom: 10px;
-            text-transform: uppercase;
+        .website-link {
+            color: #007fb1;
+            text-decoration: underline;
         }
         .logo {
             max-width: 120px;
@@ -138,10 +136,13 @@
                     @else
                         <div>Email: sriannapooranicrackers@gmail.com</div>
                     @endif
+                    <div>
+                        Website URL:
+                        <a href="https://sriannapooranicrackers.com" class="website-link">sriannapooranicrackers.com</a>
+                    </div>
                 </div>
             </td>
             <td class="header-right">
-                <div class="original-text">ORIGINAL</div>
                 <img src="{{ public_path('assets/img/annapoorani-image.png') }}" class="logo" alt="Logo">
             </td>
         </tr>
@@ -150,6 +151,10 @@
     <div class="divider"></div>
 
     <div class="doc-title">Price List</div>
+
+    @php
+        $serialNumber = 1;
+    @endphp
 
     @foreach($categories as $category)
         @if($category->products->count() > 0)
@@ -168,7 +173,7 @@
                 <tbody>
                     @foreach($category->products as $product)
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $serialNumber++ }}</td>
                             <td class="product-name">{{ $product->product_name }}</td>
                             @php
                                 $name = strtolower($product->product_name);

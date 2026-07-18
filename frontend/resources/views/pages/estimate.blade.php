@@ -631,6 +631,150 @@ thead th:first-child::before {
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
+.product-image-preview-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 65px;
+    height: 65px;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    cursor: zoom-in;
+    touch-action: manipulation;
+}
+
+.product-image-preview-trigger:hover img {
+    transform: scale(1.06);
+}
+
+.product-image-preview-trigger:focus-visible {
+    outline: 3px solid #f0a832;
+    outline-offset: 3px;
+}
+
+.product-image-preview-trigger img {
+    transition: transform 0.2s ease;
+}
+
+.product-image-preview {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(7, 10, 18, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.product-image-preview[hidden] {
+    display: none;
+}
+
+.product-image-preview__dialog {
+    position: relative;
+    display: flex;
+    width: 94vw;
+    height: 90vh;
+    height: 90dvh;
+    max-height: 900px;
+    box-sizing: border-box;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 48px 14px 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+}
+
+.product-image-preview__media {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-image-preview__image {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    margin: auto;
+    border-radius: 12px;
+    object-fit: contain;
+}
+
+.product-image-preview__caption {
+    margin: 0;
+    color: #111827;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.product-image-preview__error {
+    padding: 40px 20px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.product-image-preview__close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #111827;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.product-image-preview__close:hover,
+.product-image-preview__close:focus-visible {
+    background: #f0a832;
+    color: #fff;
+    outline: none;
+}
+
+@media (min-width: 601px) {
+    .product-image-preview {
+        padding: 24px;
+    }
+
+    .product-image-preview__dialog {
+        width: 88vw;
+        padding: 56px 24px 20px;
+        border-radius: 24px;
+    }
+
+}
+
+@media (min-width: 992px) {
+    .product-image-preview__dialog {
+        width: min(90vw, 1100px);
+        padding: 60px 30px 24px;
+    }
+
+}
+
 .product-name {
     font-weight: 800;
     color: var(--ink);
@@ -2192,7 +2336,13 @@ thead th,
                                 @foreach($category->products as $product)
                                     <tr class="product-row" data-product-id="{{ $product->id }}" data-product-content="{{ $product->product_content }}" data-category="{{ strtolower($category->category_name) }}" data-mrp="{{ $product->product_mrp_price }}" data-gst="{{ $product->product_gst !== null && $product->product_gst !== '' ? $product->product_gst : '' }}" data-gst-active="{{ $product->is_product_gst_active ?? 1 }}">
                                         <td>
-                                            <img src="{{ $product->product_image ? config('services.asset_base_url') . '/' . ltrim($product->product_image, '/') : 'https://via.placeholder.com/100' }}" alt="{{ $product->product_name }}" loading="lazy">
+                                            <button
+                                                type="button"
+                                                class="product-image-preview-trigger"
+                                                aria-label="Preview {{ $product->product_name }} image"
+                                            >
+                                                <img src="{{ $product->product_image ? config('services.asset_base_url') . '/' . ltrim($product->product_image, '/') : 'https://via.placeholder.com/100' }}" alt="{{ $product->product_name }}" loading="lazy">
+                                            </button>
                                         </td>
                                         <td class="product-name">{{ $product->product_name }}</td>
                                         <!-- <td>
@@ -2231,6 +2381,28 @@ thead th,
             </div>
     </section>
 
+    <div
+        id="productImagePreview"
+        class="product-image-preview notranslate"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="productImagePreviewCaption"
+        hidden
+    >
+        <div class="product-image-preview__dialog">
+            <button type="button" class="product-image-preview__close" aria-label="Close image preview">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+            <div class="product-image-preview__media">
+                <img id="productImagePreviewImage" class="product-image-preview__image" src="" alt="">
+                <div id="productImagePreviewError" class="product-image-preview__error" hidden>
+                    Image preview is unavailable.
+                </div>
+            </div>
+            <p id="productImagePreviewCaption" class="product-image-preview__caption"></p>
+        </div>
+    </div>
+
     <!-- 4. CART DRAWER -->
     <div class="cart-drawer" id="cartDrawer">
         <div class="cart-drawer-header">
@@ -2255,8 +2427,8 @@ thead th,
             @endif
             <div class="cart-summary-rows">
                 <div class="cart-summary-row"><span>Max Retail Price</span><span id="cartActual">₹0</span></div>
+                <div class="cart-summary-row" style="color: #16A34A; font-weight: 700; margin-top:10px;"><span>Discount</span><span id="cartSave">- ₹0</span></div>
                 <div class="cart-summary-row" id="cartGstRow" style="display:none; color: #555; font-weight: 700; margin-top:10px;"><span>GST</span><span id="cartGstAmount">₹0</span></div>
-                <div class="cart-summary-row" style="color: #16A34A; font-weight: 700; margin-top:10px;"><span>Your Savings</span><span id="cartSave">- ₹0</span></div>
                 
                 @if(!empty($globalCharges['additional_charge_name']) && floatval($globalCharges['additional_charge_percentage'] ?? 0) > 0)
                     <div class="cart-summary-row" style="color: #475569; font-weight: 600; margin-top:5px;">
@@ -2419,6 +2591,7 @@ thead th,
 <script>
     const MIN_ORDER = {{ $minOrder }};
     const GLOBAL_GST = {{ $globalGst }};
+    const GST_TYPE = @json($gstType);
     const additionalChargeName = @json($globalCharges['additional_charge_name'] ?? '');
     const additionalChargePercentage = {{ floatval($globalCharges['additional_charge_percentage'] ?? 0) }};
     let additionalChargeAmount = 0;
@@ -2446,6 +2619,72 @@ thead th,
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+
+        const productTable = document.getElementById('productTable');
+        const imagePreview = document.getElementById('productImagePreview');
+        const previewImage = document.getElementById('productImagePreviewImage');
+        const previewCaption = document.getElementById('productImagePreviewCaption');
+        const previewError = document.getElementById('productImagePreviewError');
+        const previewCloseButton = imagePreview?.querySelector('.product-image-preview__close');
+        let previewTrigger = null;
+        let previousBodyOverflow = '';
+
+        const closeProductImagePreview = () => {
+            if (!imagePreview || imagePreview.hidden) return;
+
+            imagePreview.hidden = true;
+            previewImage.src = '';
+            previewImage.alt = '';
+            previewError.hidden = true;
+            document.body.style.overflow = previousBodyOverflow;
+
+            if (previewTrigger?.isConnected) {
+                previewTrigger.focus();
+            }
+            previewTrigger = null;
+        };
+
+        const openProductImagePreview = (trigger) => {
+            const image = trigger.querySelector('img');
+            if (!image || !imagePreview) return;
+
+            previewTrigger = trigger;
+            previousBodyOverflow = document.body.style.overflow;
+            previewCaption.textContent = image.alt || 'Product image';
+            previewImage.alt = `${image.alt || 'Product'} enlarged preview`;
+            previewImage.hidden = false;
+            previewError.hidden = true;
+            previewImage.src = image.currentSrc || image.src;
+            imagePreview.hidden = false;
+            document.body.style.overflow = 'hidden';
+            previewCloseButton?.focus();
+        };
+
+        productTable?.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.product-image-preview-trigger');
+            if (trigger) {
+                openProductImagePreview(trigger);
+            }
+        });
+
+        previewImage?.addEventListener('error', () => {
+            previewImage.hidden = true;
+            previewError.hidden = false;
+        });
+
+        previewCloseButton?.addEventListener('click', closeProductImagePreview);
+
+        imagePreview?.addEventListener('click', (event) => {
+            if (event.target === imagePreview) {
+                closeProductImagePreview();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && imagePreview && !imagePreview.hidden) {
+                closeProductImagePreview();
+            }
+        });
 
         // Quantity Controls
         document.querySelectorAll(".qty").forEach(input => {
@@ -2572,7 +2811,9 @@ thead th,
             const mrp = parseFloat(row.dataset.mrp) || 0;
             const productGstAttr = row.dataset.gst;
             const isGstActive = row.dataset.gstActive === "1";
-            const gstPercent = (isGstActive && productGstAttr !== "") ? parseFloat(productGstAttr) : GLOBAL_GST;
+            const gstPercent = isGstActive
+                ? (productGstAttr !== "" ? parseFloat(productGstAttr) : GLOBAL_GST)
+                : 0;
             const rowTotalElement = row.querySelector(".rowTotal");
             const name = row.querySelector(".product-name").innerText;
 
@@ -2588,6 +2829,16 @@ thead th,
             });
         });
         isProductsCached = true;
+    }
+
+    function calculateItemGst(discountedTotal, gstPercent) {
+        if (discountedTotal <= 0 || gstPercent <= 0) return 0;
+
+        const gstAmount = GST_TYPE === 'inclusive'
+            ? (discountedTotal * gstPercent) / (100 + gstPercent)
+            : (discountedTotal * gstPercent) / 100;
+
+        return Math.round((gstAmount + Number.EPSILON) * 100) / 100;
     }
 
     function calculate() {
@@ -2609,7 +2860,7 @@ thead th,
             netTotal += rowTotal;
             actualTotal += actualRow;
 
-            const itemGst = (qty * item.mrp * item.gstPercent) / 100;
+            const itemGst = calculateItemGst(rowTotal, item.gstPercent);
             totalGst += itemGst;
 
             if (qty > 0) {
@@ -2632,7 +2883,8 @@ thead th,
         document.getElementById("cartCount").innerText = cartCount;
 
         additionalChargeAmount = Math.round(((netTotal * additionalChargePercentage) / 100 + Number.EPSILON) * 100) / 100;
-        const netWithCharge = netTotal + additionalChargeAmount + totalGst;
+        const payableGst = GST_TYPE === 'exclusive' ? totalGst : 0;
+        const netWithCharge = netTotal + additionalChargeAmount + payableGst;
 
         document.getElementById("cartActual").innerText = '₹' + actualTotal.toLocaleString('en-IN');
         document.getElementById("cartSave").innerText = '- ₹' + (actualTotal - netTotal).toLocaleString('en-IN');
@@ -2865,7 +3117,8 @@ thead th,
         const actualTotal = cartData.reduce((sum, item) => sum + item.mrp_total, 0);
         const subTotalValue = cartData.reduce((sum, item) => sum + item.total, 0);
         const additionalCharge = Math.round(((subTotalValue * additionalChargePercentage) / 100 + Number.EPSILON) * 100) / 100;
-        const netValue = subTotalValue + additionalCharge + totalGst;
+        const payableGst = GST_TYPE === 'exclusive' ? totalGst : 0;
+        const netValue = subTotalValue + additionalCharge + payableGst;
         
         errorDiv.style.display = "none";
         submitBtn.disabled = true;
@@ -2937,7 +3190,9 @@ thead th,
                     actual: item.actual,
                     total: qty * item.price,
                     mrp_total: qty * item.actual,
-                    item_gst: (qty * item.mrp * item.gstPercent) / 100
+                    gst_rate: item.gstPercent,
+                    gst_type: GST_TYPE,
+                    item_gst: calculateItemGst(qty * item.price, item.gstPercent)
                 });
             }
         });

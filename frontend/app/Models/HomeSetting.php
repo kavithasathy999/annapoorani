@@ -39,6 +39,7 @@ class HomeSetting extends Model
         'why_stats',
         'cta_data',
         'global_gst',
+        'gst_type',
     ];
 
     protected $casts = [

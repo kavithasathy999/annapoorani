@@ -587,4 +587,29 @@ router.put('/:id/payment-status', auth, async (req, res) => {
   }
 });
 
+// DELETE /api/orders/:id — Delete an order and its items
+router.delete('/:id', auth, async (req, res) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    await connection.query('DELETE FROM product_slots WHERE order_id = ?', [req.params.id]);
+    const [result] = await connection.query('DELETE FROM orders WHERE id = ?', [req.params.id]);
+
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+
+    await connection.commit();
+    res.json({ success: true, message: 'Order deleted successfully.' });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
 module.exports = router;

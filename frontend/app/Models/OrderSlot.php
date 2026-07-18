@@ -18,6 +18,9 @@ class OrderSlot extends Model
         'product_name',
         'product_total',
         'qty',
+        'is_gst_applied',
+        'item_gst',
+        'product_gst_rate',
     ];
 
     public function product()

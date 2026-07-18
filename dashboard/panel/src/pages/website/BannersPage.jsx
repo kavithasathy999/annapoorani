@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image as ImageIcon, Edit, Trash, Plus, LoaderCircle, Link as LinkIcon } from 'lucide-react';
+import { Image as ImageIcon, Edit, Trash, Plus, LoaderCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import { useConfirm } from '../../context/ConfirmContext';
@@ -123,24 +123,6 @@ const BannersPage = () => {
       key: 'name',
       label: 'Banner Name',
       render: (value) => <span className="font-medium text-slate-800 dark:text-white">{value}</span>,
-    },
-    {
-      key: 'link',
-      label: 'Link',
-      render: (value) =>
-        value ? (
-          <a
-            href={value}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex max-w-[220px] items-center gap-2 truncate text-sm text-amber-600 hover:text-amber-500 dark:text-amber-400"
-          >
-            <LinkIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{value}</span>
-          </a>
-        ) : (
-          <span className="text-slate-400 dark:text-slate-500">No link</span>
-        ),
     },
     { key: 'sort_order', label: 'Order' },
     {

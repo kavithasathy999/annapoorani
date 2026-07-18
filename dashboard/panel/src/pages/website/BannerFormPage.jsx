@@ -9,9 +9,12 @@ import { Badge } from '../../components/ui/Badge';
 import { Input, Select } from '../../components/ui/FormFields';
 import { apiRequest, getAssetUrl } from '../../lib/api';
 
+const BANNER_WIDTH = 1080;
+const BANNER_HEIGHT = 600;
+const BANNER_SIZE_LABEL = `${BANNER_WIDTH} x ${BANNER_HEIGHT} px`;
+
 const initialForm = {
   name: '',
-  link: '',
   sort_order: '0',
   is_active: '1',
 };
@@ -25,6 +28,8 @@ const BannerFormPage = () => {
   const [form, setForm] = useState(initialForm);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [imageError, setImageError] = useState('');
+  const [isValidatingImage, setIsValidatingImage] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -59,7 +64,6 @@ const BannerFormPage = () => {
 
         setForm({
           name: banner.name || '',
-          link: banner.link || '',
           sort_order: String(banner.sort_order ?? 0),
           is_active: String(Number(banner.is_active ?? 1)),
         });
@@ -86,18 +90,46 @@ const BannerFormPage = () => {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    if (previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    const fileInput = event.target;
+    const candidatePreviewUrl = URL.createObjectURL(file);
+    setIsValidatingImage(true);
+    setImageError('');
 
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    try {
+      const dimensions = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve({
+          width: image.naturalWidth,
+          height: image.naturalHeight,
+        });
+        image.onerror = () => reject(new Error('Unable to read the selected image dimensions.'));
+        image.src = candidatePreviewUrl;
+      });
+
+      if (dimensions.width !== BANNER_WIDTH || dimensions.height !== BANNER_HEIGHT) {
+        throw new Error(`Banner image must be exactly ${BANNER_SIZE_LABEL}.`);
+      }
+
+      if (previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
+      setSelectedFile(file);
+      setPreviewUrl(candidatePreviewUrl);
+    } catch (error) {
+      URL.revokeObjectURL(candidatePreviewUrl);
+      fileInput.value = '';
+      setImageError(error.message);
+      addToast(error.message, 'error');
+    } finally {
+      setIsValidatingImage(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -115,7 +147,6 @@ const BannerFormPage = () => {
       setIsSubmitting(true);
       const payload = new FormData();
       payload.append('name', form.name.trim());
-      payload.append('link', form.link.trim());
       payload.append('sort_order', String(Number(form.sort_order || 0)));
       payload.append('is_active', form.is_active);
 
@@ -144,13 +175,13 @@ const BannerFormPage = () => {
       <PageHeader
         title={isEditMode ? 'Edit Banner' : 'Add Banner'}
         icon={ImageIcon}
-        subtitle="Recommended image size: 1920 x 1080 px."
+        subtitle={`Required banner image size: ${BANNER_SIZE_LABEL}.`}
         action={
           <div className="flex gap-3">
             <Button variant="secondary" onClick={() => navigate('/website/banners')} icon={ArrowLeft}>
               Back
             </Button>
-            <Button onClick={handleSubmit} icon={Save} disabled={isSubmitting || isLoading}>
+            <Button onClick={handleSubmit} icon={Save} disabled={isSubmitting || isLoading || isValidatingImage}>
               {isSubmitting ? 'Saving...' : isEditMode ? 'Update Banner' : 'Create Banner'}
             </Button>
           </div>
@@ -167,20 +198,13 @@ const BannerFormPage = () => {
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <Card className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6">
               <Input
                 label="Banner Name"
                 name="name"
                 value={form.name}
                 onChange={handleInputChange}
                 placeholder="Festival Mega Offer"
-              />
-              <Input
-                label="Redirect Link"
-                name="link"
-                value={form.link}
-                onChange={handleInputChange}
-                placeholder="https://example.com/products"
               />
             </div>
 
@@ -206,20 +230,33 @@ const BannerFormPage = () => {
             </div>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-400">Banner Image</span>
+              <span className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-400">
+                Banner Image ({BANNER_SIZE_LABEL})
+              </span>
               <div className="cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center transition-colors hover:bg-slate-100 dark:border-white/20 dark:bg-white/[0.01] dark:hover:bg-white/[0.03]">
-                <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  disabled={isValidatingImage}
+                />
                 <UploadCloud className="mx-auto mb-3 h-9 w-9 text-slate-400" />
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Click to upload PNG, JPG, WEBP or SVG
+                  {isValidatingImage ? 'Validating image...' : 'Click to upload PNG, JPG, WEBP or SVG'}
                 </p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Recommended size: 1920 x 1080 px
+                  Required size: {BANNER_SIZE_LABEL}
                 </p>
                 <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                   Max file size 10MB
                 </p>
               </div>
+              {imageError && (
+                <span className="mt-1.5 block text-sm font-medium text-rose-600 dark:text-rose-400">
+                  {imageError}
+                </span>
+              )}
             </label>
           </Card>
 
@@ -227,24 +264,21 @@ const BannerFormPage = () => {
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Preview</p>
               <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-500 dark:border-white/10 dark:text-slate-400">
-                1920 x 1080 px
+                {BANNER_SIZE_LABEL}
               </span>
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm dark:border-white/10 dark:bg-white/[0.02]">
               {previewUrl ? (
-                <img src={previewUrl} alt="Banner preview" className="aspect-video w-full object-cover" />
+                <img src={previewUrl} alt="Banner preview" className="aspect-[9/5] w-full object-cover" />
               ) : (
-                <div className="flex aspect-video items-center justify-center px-4 text-center text-sm text-slate-400 dark:text-slate-500">
-                  Upload a 1920 x 1080 px banner image to preview the output.
+                <div className="flex aspect-[9/5] items-center justify-center px-4 text-center text-sm text-slate-400 dark:text-slate-500">
+                  Upload a {BANNER_SIZE_LABEL} banner image to preview the output.
                 </div>
               )}
               <div className="space-y-2 border-t border-slate-200 p-4 dark:border-white/10">
                 <p className="truncate text-sm font-semibold text-slate-800 dark:text-white">
                   {form.name || 'Banner title'}
-                </p>
-                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                  {form.link || 'No redirect link'}
                 </p>
                 <Badge status={form.is_active === '1' ? 'Active' : 'Inactive'} />
               </div>
