@@ -724,40 +724,42 @@ const BillingInvoicesPage = () => {
         ))}
       </div>
 
-      <Card className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <Select
-            label="Payment Status"
-            name="payment_status"
-            value={filters.payment_status}
-            onChange={handleFilterChange}
-            options={['All', ...PAYMENT_STATUS_OPTIONS]}
-          />
-          <Select
-            label="Order Status"
-            name="status"
-            value={filters.status}
-            onChange={handleFilterChange}
-            options={['All', ...orderStatuses]}
-          />
-          <Input label="Start Date" name="start_date" type="date" value={filters.start_date} onChange={handleFilterChange} />
-          <Input label="End Date" name="end_date" type="date" value={filters.end_date} onChange={handleFilterChange} />
-          <Input
-            label="Customer / Invoice Search"
-            name="search"
-            value={filters.search}
-            onChange={handleFilterChange}
-            placeholder="Invoice no, customer, phone"
-          />
-        </div>
+      <Card>
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <Select
+              label="Payment Status"
+              name="payment_status"
+              value={filters.payment_status}
+              onChange={handleFilterChange}
+              options={['All', ...PAYMENT_STATUS_OPTIONS]}
+            />
+            <Select
+              label="Order Status"
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              options={['All', ...orderStatuses]}
+            />
+            <Input label="Start Date" name="start_date" type="date" value={filters.start_date} onChange={handleFilterChange} />
+            <Input label="End Date" name="end_date" type="date" value={filters.end_date} onChange={handleFilterChange} />
+            <Input
+              label="Customer / Invoice Search"
+              name="search"
+              value={filters.search}
+              onChange={handleFilterChange}
+              placeholder="Invoice no, customer, phone"
+            />
+          </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-          <Button className="w-full sm:w-auto" icon={Search} onClick={handleApplyFilters}>
-            Apply Filters
-          </Button>
-          <Button className="w-full sm:w-auto" variant="secondary" onClick={handleResetFilters}>
-            Reset
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <Button className="w-full sm:w-auto" icon={Search} onClick={handleApplyFilters}>
+              Apply Filters
+            </Button>
+            <Button className="w-full sm:w-auto" variant="secondary" onClick={handleResetFilters}>
+              Reset
+            </Button>
+          </div>
         </div>
       </Card>
 
